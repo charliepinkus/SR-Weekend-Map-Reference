@@ -1,74 +1,45 @@
 # SR Weekend Map, design reference
 
-An interactive design and UX reference for the map on the SR Weekend site (Sheraton Denver Downtown, Nov 13 to 15, 2026). It is a communication prototype for the site's developers. There is no backend and no mapping API. Everything is static HTML, CSS and JavaScript, so it runs on GitHub Pages with no build step.
+A design and UX reference for the map on the SR Weekend site (Sheraton Denver Downtown, Nov 13 to 15, 2026). It's static HTML, CSS and JavaScript, with no build step and no API keys, so it runs as is on GitHub Pages.
+
+## What it shows
+
+- A real map of downtown Denver built from OpenStreetMap data (streets, blocks, building footprints, parks, rivers), styled in the SR palette and rotated so the downtown grid runs square.
+- The Sheraton as SR Weekend HQ, with its real footprint in crimson and the Super Steve Help Desk attached.
+- Tapping the Sheraton opens a guide to the spots inside, across Lobby level and Level 2.
+- City pins for Whiskey Row and Flyhi, a shuttle pickup marker, and off-map chips for Red Rocks, Certified Tattoo and Denver Improv that point the real direction.
+- City cards hand off to Apple Maps, with Google Maps as a secondary link.
+
+## Screenshot links
+
+Add `&clean=1` to hide the Design reference tag.
+
+- Default: `/`
+- Sheraton: `/?loc=sheraton`
+- Help desk: `/?loc=help-desk`
+- Parlur: `/?loc=parlur`
+- Whiskey Row: `/?loc=whiskey-row`
+- Flyhi: `/?loc=flyhi`
+- Certified Tattoo: `/?loc=certified-tattoo`
+- Red Rocks: `/?loc=red-rocks`
 
 ## Files
 
-- `index.html` page shell
-- `styles.css` all styling. Colors are CSS variables at the top of the file
-- `app.js` draws the map, markers and cards. You should not need to edit it
-- `locations.js` every location, room and setting. Edit this file
-- `fonts/` self-hosted stand-in fonts
-- `assets/sr-mark.svg` SR monogram
+- `index.html`, `styles.css`, `app.js` are the page, styling and behavior
+- `locations.js` holds every place, all copy and settings. Edit this file
+- `data/basemap.js` is the processed Denver map data
+- `vendor/d3.min.js` handles pan and zoom
+- `fonts/`, `assets/` hold the stand-in fonts and SR monogram
+- `tools/prep.py` is the script that built `data/basemap.js`, for reference
 
-## Screenshot states
+## Editing places
 
-Add `&clean=1` to any of these to hide the small "Design reference" tag.
+City and off-map places use real `lat` and `lng`. Places inside the Sheraton use `spots`, a position on the hotel diagram. Every place has a `name`, `address` or `where`, `hours`, a one or two sentence `description`, an optional `access` tag and one `cta`. Any text set to exactly `"TBC"` shows as a TBC chip. An `address` of `null` shows Address TBC.
 
-1. Mobile default: `/`
-2. Mobile, hotel spot: `/?loc=parlur`
-3. Mobile, city spot with Apple Maps: `/?loc=whiskey-row` (or `/?loc=red-rocks`)
-4. Mobile, help desk: `/?loc=help-desk`
-5. Desktop, a spot selected: `/?loc=grand-ballroom`
+## Notes for the production build
 
-`?debug=1` outlines every label and marker and flags any overlap in red.
-
-## Editing locations
-
-Open `locations.js`. Each entry has:
-
-- `id` used in the `?loc=` link
-- `enabled` set to `false` to hide it
-- `type` one of `help`, `hotel`, `city`, `edge` (edge means off the map, shown as a chip)
-- `minor: true` for small unlabeled hotel markers
-- `name`, `subtitle`, `label` (the short map label, `\n` for a line break)
-- `where` level and area for hotel spots, `address` for city spots (`null` shows Address TBC)
-- `hours` a list of `{ day, time, note, tbc }`. Or `hoursFrom: "parlur"` to reuse another spot's hours
-- `description` one or two sentences
-- `access` the tag, like Ticketed or Sold out. `accessTbc: true` adds a TBC chip
-- `cta` the one button. `kind` is `apple-place`, `apple-directions`, `help`, `itinerary`, `location` (opens another card) or a plain `url`
-- `map` one or more positions `{ x, y, label, icon, tag, tagBelow }`. Edge chips use `{ x, y, anchor, arrow }`
-
-Map positions are in map units on a 390 by 686 canvas, the size of a phone. They are only for drawing. The Apple Maps link is built from `address`, never from the position. Rooms and the two level plates are in the `plates` and `areas` lists in the same file.
-
-Any value set to exactly `"TBC"` renders as a TBC chip.
-
-Settings live in `config`. `showToggle: true` turns on the Hotel and Denver control. It is off by default.
-
-## Run locally
-
-```
-python3 -m http.server 8000
-```
-
-Then open http://localhost:8000.
-
-## Deploy to GitHub Pages
-
-1. Create a public repo named `SR-Weekend-Map-Reference`
-2. Upload every file in this folder to the root of the repo, keeping the `fonts` and `assets` folders
-3. Settings, Pages, Source: Deploy from a branch, Branch: `main`, folder `/ (root)`, Save
-4. The site goes live at `https://<username>.github.io/SR-Weekend-Map-Reference/` within a minute or two
-
-## Decisions and assumptions
-
-- One map. The hotel is drawn as two stacked plates, Level 2 on top and the Lobby level below, joined by the escalators. Downtown is compressed around it and is not to scale. The toggle wasn't needed but is built and off.
-- Hotel layout is schematic. The Level 2 plate sits over the Parlur side, per the freight elevator note. The Parlur is on the left with its street entrance, the front desk and fireplace wall are on the right.
-- Denver Improv is at 8246 Northfield Blvd, well outside downtown, so it is an edge chip.
-- Certified Tattoo runs the flash collection across its Denver studios. The chip points to the East Colfax studio (3216 E Colfax Ave), the closest to downtown. Hours shown are Certified's standard hours and should be confirmed.
-- Whiskey Row address is 1946 Market St. Red Rocks is 18300 W Alameda Pkwy, Morrison.
-- Shuttle pickup address and times are TBC, so its button routes to the help desk.
-- The café card does not say whether coffee is sold or sampled.
-- Hotel cards without a place to navigate to link to the itinerary as a placeholder anchor. The help desk button links to a placeholder anchor until the online help desk exists.
-- Fonts are stand-ins for the SR system. Bricolage Grotesque for names, Instrument Sans for body, Courier Prime in place of American Typewriter for small labels and times.
-- The one orange on the map is the help desk, to match the Super Steve shirts.
+- The bundled street data covers downtown and stops at Broadway, so the Capitol Hill side is drawn with only Colfax, Broadway and the Capitol. For production, a styled vector-tile map (MapLibre with OpenFreeMap, Protomaps or Mapbox) using these same colors gives full coverage.
+- The rotated grid is a design choice. A north-up map works too if the team prefers it to match Apple Maps.
+- Flyhi's position comes from its address at 16th and Tremont. The offer and hours are TBC.
+- Certified's Nov 9 to 30 dates come from the deal terms. The pin is the East Colfax studio.
+- Map data © OpenStreetMap contributors, ODbL. The attribution stays visible on the map.

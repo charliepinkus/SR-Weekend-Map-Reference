@@ -1,74 +1,71 @@
 /*
-  SR Weekend map: every location, room and setting lives in this file.
-  Edit here. You should never need to touch app.js or styles.css to add,
-  remove or move a location.
+  SR Weekend map. All places, copy and settings live in this file.
+  Edit here. You should never need to touch app.js or styles.css to
+  add, remove or move a place.
 
-  MAP UNITS
-  The map canvas is 390 wide by 686 tall (a 390px phone at 1:1).
-  All x / y values below are in those units. On bigger screens the
-  whole canvas scales up, markers and labels stay the same size.
+  POSITIONS
+  City places use real latitude and longitude (lat, lng).
+  Off-map places also use real lat / lng. The map works out which edge
+  of the screen to pin them to, so they always point the right way.
+  Places inside the Sheraton use `spot`, a position on the illustrated
+  hotel diagram: level "lobby" or "level2", u from 0 (back) to 100
+  (front right), v from 0 (back) to 40 (front left).
+
+  ADDRESSES
+  `address` is what the card shows and what Apple Maps receives.
+  It is separate from the drawing position. null shows "Address TBC".
 
   TBC
-  Any text value set to exactly "TBC" renders as a TBC chip.
-  An address of null renders as "Address TBC".
-  Hours rows can carry  tbc: true  to add a TBC chip after the time.
+  Any text set to exactly "TBC" renders as a TBC chip.
+  Hours rows can carry tbc: true to add a chip after the time.
 */
 
 window.SR_MAP = {
   config: {
-    // Two-segment Hotel / Denver control. Off by default: one map first.
-    showToggle: false,
     eventName: "SR Weekend",
     dates: "Nov 13 to 15, 2026",
-    hotelName: "Sheraton Denver Downtown",
-    hotelAddress: "1550 Court Pl, Denver, CO 80202",
-    // Placeholder anchors until the real site sections exist.
-    helpDeskUrl: "#steve-help-desk",
-    itineraryUrl: "#itinerary"
+    city: "Denver",
+    helpDeskUrl: "#steve-help-desk",   // placeholder until the online help desk exists
+    itineraryUrl: "#itinerary"          // placeholder until the itinerary section exists
   },
 
-  /* Hotel levels, drawn as two stacked plates. */
-  plates: [
-    { id: "level-2", tab: "Level 2, event level", x: 16, y: 140, w: 324, h: 180 },
-    { id: "lobby",   tab: "Lobby level",          x: 16, y: 372, w: 358, h: 220 }
-  ],
+  /* ---------------- HOME BASE ---------------- */
+  hq: {
+    id: "sheraton",
+    name: "Sheraton Denver Downtown",
+    tag: "SR Weekend HQ",
+    address: "1550 Court Pl, Denver, CO 80202",
+    lat: 39.742043, lng: -104.989296,
+    description: "Home base for the weekend. The store, the listening party and the help desk are all here.",
+    cta: { label: "Get directions", kind: "apple-directions" }
+  },
 
-  /* Named rooms inside the plates. `for` makes the room tappable. */
-  areas: [
-    { id: "ballroom",  for: "grand-ballroom", x: 28,  y: 152, w: 118, h: 156, note: "Listening party" },
-    { id: "mezz",      for: "mezzanine",      x: 154, y: 152, w: 174, h: 156, note: "South Convention Lobby" },
-    { id: "parlur",    for: "parlur",         x: 28,  y: 386, w: 142, h: 194, note: "Street entrance", doorLeft: 430, doorRight: 505 }
-  ],
-
-  locations: [
-    /* ---------- HELP ---------- */
+  /* ---------------- INSIDE THE SHERATON ---------------- */
+  hotel: [
     {
       id: "help-desk",
-      enabled: true,
-      type: "help",
+      row: "Lobby, near the front desk",
       name: "Super Steve Help Desk",
-      label: "Super Steve\nHelp Desk",
-      where: "Lobby level, near the front desk",
+      icon: "help",
+      help: true,
+      where: "Sheraton lobby, near the front desk",
+      level: "Lobby level",
       hours: [
         { day: "Fri", time: "2pm to 10pm" },
         { day: "Sat", time: "9am to 5pm" },
         { day: "Sun", time: "9am to 1pm" }
       ],
-      description: "Questions? Find the team in orange shirts and hats. A Super Steve is here all weekend to help.",
-      access: null,
+      description: "Questions? Find the team in orange shirts and hats. A Super Steve will be here throughout the weekend to help.",
       cta: { label: "Message a Super Steve", kind: "help" },
-      footnote: "Name of the online help desk TBC",
-      map: [{ x: 300, y: 456, label: "left", icon: "help" }]
+      spots: [{ level: "lobby", u: 80, v: 14 }]
     },
-
-    /* ---------- HOTEL ---------- */
     {
       id: "parlur",
-      enabled: true,
-      type: "hotel",
+      row: "The SR Weekend store",
       name: "Parlur",
-      label: "Parlur",
-      where: "Lobby level. Street entrance plus a hotel entrance",
+      icon: "bag",
+      where: "Street entrance plus a hotel entrance",
+      level: "Lobby level",
       hours: [
         { day: "Fri", time: "Afternoon", tbc: true, note: "Room key holders first, then the public" },
         { day: "Sat", time: "8am to 6pm" },
@@ -76,105 +73,84 @@ window.SR_MAP = {
       ],
       description: "The SR Weekend store. The full assortment, plus coffee and a content station inside.",
       access: "Room key only, first window Friday",
-      cta: { label: "Get directions", kind: "apple-directions", address: "1550 Court Pl, Denver, CO 80202" },
-      map: [{ x: 46, y: 410, label: "right", icon: "bag" }]
+      cta: { label: "See it in the itinerary", kind: "itinerary" },
+      spots: [{ level: "lobby", u: 12, v: 8 }]
     },
     {
       id: "cafe",
-      enabled: true,
-      type: "hotel",
-      minor: true,
+      row: "Coffee inside the Parlur",
       name: "Café",
-      where: "Lobby level, inside the Parlur at the bar",
+      icon: "cup",
+      where: "Inside the Parlur, at the bar",
+      level: "Lobby level",
       hoursFrom: "parlur",
       description: "Coffee inside the Parlur.",
-      access: null,
-      cta: { label: "Open the Parlur", kind: "location", target: "parlur" },
-      map: [{ x: 146, y: 414, icon: "cup" }]
+      cta: { label: "Open the Parlur", kind: "goto", target: "parlur" },
+      spots: [{ level: "lobby", u: 30, v: 6 }]
     },
     {
       id: "living-album",
-      enabled: true,
-      type: "hotel",
+      row: "Fri on Level 2, Sat and Sun in the Parlur",
       name: "Living Album",
-      label: "Living Album",
-      where: "Friday on the mezzanine, Level 2. Saturday and Sunday in the Parlur lounge, Lobby level",
+      icon: "headphones",
+      where: "Friday on the mezzanine. Saturday and Sunday in the Parlur lounge",
+      level: "Level 2 on Friday, Lobby level after",
       hours: [
         { day: "Fri", time: "From about 5pm", note: "Mezzanine, Level 2" },
         { day: "Sat", time: "During Parlur hours", note: "Parlur lounge" },
         { day: "Sun", time: "During Parlur hours", note: "Parlur lounge" }
       ],
       description: "Step in, put on headphones and explore mike.'s album The In-Betweens through the Living Album.",
-      access: null,
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [
-        { x: 172, y: 232, label: "right", icon: "headphones", tag: "Fri" },
-        { x: 46,  y: 540, label: "right", icon: "headphones", tag: "Sat, Sun", tagBelow: true }
-      ]
+      spots: [{ level: "level2", u: 58, v: 16, tag: "Fri" }, { level: "lobby", u: 22, v: 22, tag: "Sat, Sun" }]
     },
     {
-      id: "content-station",
-      enabled: true,
-      type: "hotel",
-      minor: true,
-      name: "Content station",
-      where: "Lobby level, inside the Parlur near the lounge",
-      hoursFrom: "parlur",
+      id: "content-stations",
+      row: "In the Parlur and the main lobby",
+      name: "Content stations",
+      icon: "camera",
+      where: "Inside the Parlur near the lounge, plus a photo moment in the lobby",
+      level: "Lobby level",
+      hours: [{ day: "", time: "Times", tbc: true }],
       description: "Grab a photo.",
-      access: null,
-      cta: { label: "Open the Parlur", kind: "location", target: "parlur" },
-      map: [{ x: 146, y: 472, icon: "camera" }]
-    },
-    {
-      id: "photo-moment",
-      enabled: true,
-      type: "hotel",
-      minor: true,
-      name: "Photo moment",
-      where: "Lobby level, in the main lobby",
-      hours: [{ day: "All", time: "TBC" }],
-      description: "Grab a photo.",
-      access: null,
-      cta: { label: "Ask a Super Steve", kind: "location", target: "help-desk" },
-      map: [{ x: 262, y: 552, icon: "camera" }]
+      cta: { label: "Open the Parlur", kind: "goto", target: "parlur" },
+      spots: [{ level: "lobby", u: 38, v: 20 }, { level: "lobby", u: 62, v: 28 }]
     },
     {
       id: "mezzanine",
-      enabled: true,
-      type: "hotel",
+      row: "Top of the escalators, Fri night",
       name: "Mezzanine",
-      label: "Mezzanine",
-      where: "Level 2, top of the escalators",
-      hours: [
-        { day: "Fri", time: "From about 5:30pm", note: "Bars open at 6pm" }
-      ],
+      subtitle: "South Convention Lobby",
+      icon: "layers",
+      where: "Top of the escalators",
+      level: "Level 2",
+      hours: [{ day: "Fri", time: "From about 5:30pm", note: "Bars open at 6pm" }],
       description: "Merch, bars and the Living Album booth on Friday night.",
       access: "Hotel key may be required",
       accessTbc: true,
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [{ x: 172, y: 176, label: "right", icon: "layers" }]
+      spots: [{ level: "level2", u: 46, v: 6 }]
     },
     {
       id: "stevenson-mingle",
-      enabled: true,
-      type: "hotel",
+      row: "Fri evening on the mezzanine",
       name: "Stevenson Mingle",
-      label: "Stevenson Mingle",
-      where: "Level 2, on the mezzanine. Exact spot TBC",
+      icon: "glass",
+      where: "On the mezzanine. Exact spot TBC",
+      level: "Level 2",
       hours: [{ day: "Fri", time: "Evening", tbc: true }],
       description: "A Friday night mingle for Steves on the mezzanine.",
-      access: null,
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [{ x: 172, y: 284, label: "right", icon: "glass", tag: "Fri" }]
+      spots: [{ level: "level2", u: 62, v: 30, tag: "Fri" }]
     },
     {
       id: "grand-ballroom",
-      enabled: true,
-      type: "hotel",
+      row: "Listening party, Fri doors 8pm",
       name: "Grand Ballroom",
       subtitle: "The In-Betweens listening party",
-      label: "Grand\nBallroom",
-      where: "Level 2",
+      icon: "disc",
+      where: "",
+      level: "Level 2",
       hours: [
         { day: "Fri", time: "Doors 8pm" },
         { day: "", time: "9pm to 11pm", note: "Program and live Q&A with mike." },
@@ -183,113 +159,109 @@ window.SR_MAP = {
       description: "mike.'s first and last ever album listening party, followed by the after party.",
       access: "Ticketed",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [{ x: 46, y: 176, label: "right", icon: "disc" }]
-    },
+      spots: [{ level: "level2", u: 16, v: 12 }]
+    }
+  ],
 
-    /* Optional, off by default. Flip enabled to true to show. */
-    {
-      id: "windows-room",
-      enabled: false,
-      type: "hotel",
-      name: "Windows room",
-      subtitle: "Meditation and breathwork",
-      label: "Windows",
-      where: "Level 2",
-      hours: [{ day: "Sat", time: "9:30am and 11:30am" }],
-      description: "Morning meditation and breathwork sessions.",
-      access: "Sold out",
-      cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [{ x: 306, y: 176, label: "below", icon: "wave" }]
-    },
-    {
-      id: "speakeasy",
-      enabled: false,
-      type: "hotel",
-      name: "Stevenson Speakeasy",
-      label: "Speakeasy",
-      where: "Lobby level, at the Bezel lobby bar",
-      hours: [{ day: "All", time: "TBC" }],
-      description: "The Stevenson Speakeasy at the Bezel bar.",
-      access: null,
-      cta: { label: "See it in the itinerary", kind: "itinerary" },
-      map: [{ x: 262, y: 414, label: "right", icon: "glass" }]
-    },
+  /* Rooms drawn on the hotel diagram. Purely visual. */
+  rooms: [
+    { level: "lobby",  name: "Parlur",         u0: 4,  v0: 3, u1: 44, v1: 37 },
+    { level: "level2", name: "Grand Ballroom", u0: 4,  v0: 3, u1: 30, v1: 37 },
+    { level: "level2", name: "Mezzanine",      u0: 34, v0: 3, u1: 66, v1: 37 }
+  ],
 
-    /* ---------- CITY ---------- */
-    {
-      id: "shuttle",
-      enabled: true,
-      type: "city",
-      name: "Shuttle pickup",
-      label: "Shuttle pickup",
-      where: "Near the Sheraton, exact spot TBC",
-      address: null,
-      hours: [{ day: "Sat", time: "TBC" }, { day: "Sun", time: "TBC" }],
-      description: "Rides to Red Rocks leave from here.",
-      access: null,
-      cta: { label: "Ask a Super Steve", kind: "location", target: "help-desk" },
-      map: [{ x: 110, y: 630, label: "right" }]
-    },
+  /* ---------------- AROUND DOWNTOWN ---------------- */
+  city: [
     {
       id: "whiskey-row",
-      enabled: true,
-      type: "city",
       name: "Whiskey Row",
-      subtitle: "Bar crawl start",
-      label: "Whiskey Row",
+      short: "Bar crawl start",
+      icon: "glass",
+      kind: "Around downtown",
       address: "1946 Market St, Denver, CO 80202",
+      mapsQuery: "Dierks Bentley's Whiskey Row Denver",
+      lat: 39.753564, lng: -104.993754,
       hours: [{ day: "Sun", time: "9:30am" }],
-      description: "Sunday morning bar crawl, Whiskey Row into Tom's Watch Bar.",
+      description: "The Sunday morning bar crawl starts here, then heads to Tom's Watch Bar.",
       access: "Ticketed separately",
-      cta: { label: "Open in Apple Maps", kind: "apple-place", query: "Whiskey Row Denver" },
-      map: [{ x: 146, y: 70, label: "right" }]
+      cta: { label: "Open in Apple Maps", kind: "apple-place" }
     },
     {
+      id: "flyhi",
+      name: "Flyhi",
+      short: "Partner stop",
+      icon: "star",
+      kind: "Around downtown",
+      address: "401 16th St Mall, Denver, CO 80202",
+      mapsQuery: "Flyhi Cannabis Dispensary",
+      lat: 39.743496, lng: -104.989616,
+      hours: [{ day: "", time: "Hours", tbc: true }],
+      description: "SR Weekend partner stop on the 16th Street Mall, a block from the Sheraton. Offer TBC.",
+      access: "21+ with valid ID",
+      cta: { label: "Open in Apple Maps", kind: "apple-place" }
+    },
+    {
+      id: "shuttle",
+      utility: true,
+      name: "Shuttle pickup",
+      short: "Rides to Red Rocks",
+      icon: "bus",
+      kind: "Next to the Sheraton",
+      address: null,
+      where: "Outside the Sheraton, exact spot TBC",
+      lat: 39.741639, lng: -104.990352,
+      hours: [{ day: "Sat", time: "TBC" }, { day: "Sun", time: "TBC" }],
+      description: "Rides to Red Rocks leave from here.",
+      cta: { label: "Ask a Super Steve", kind: "goto", target: "help-desk" }
+    }
+  ],
+
+  /* ---------------- OFF THE MAP ---------------- */
+  edge: [
+    {
       id: "red-rocks",
-      enabled: true,
-      type: "edge",
       name: "Red Rocks Amphitheatre",
       label: "Red Rocks",
       distance: "30 min west",
+      icon: "rocks",
       address: "18300 W Alameda Pkwy, Morrison, CO 80465",
+      mapsQuery: "Red Rocks Amphitheatre",
+      lat: 39.6654, lng: -105.2057,
       hours: [{ day: "Sat", time: "Doors 6pm" }, { day: "Sun", time: "Doors 2pm" }],
       description: "Both nights are sold out. Plan your ride, it's about 30 minutes west.",
       access: "Sold out",
-      cta: { label: "Open in Apple Maps", kind: "apple-place", query: "Red Rocks Amphitheatre" },
-      map: [{ x: 14, y: 664, anchor: "left", arrow: "w", icon: "rocks" }]
+      cta: { label: "Directions in Apple Maps", kind: "apple-directions" }
     },
     {
       id: "certified-tattoo",
-      enabled: true,
-      type: "edge",
       name: "Certified Tattoo",
       subtitle: "East Colfax studio",
       label: "Certified Tattoo",
       distance: "10 min east",
       address: "3216 E Colfax Ave, Denver, CO 80206",
-      hours: [
-        { day: "Fri", time: "11am to 8pm" },
-        { day: "Sat", time: "11am to 8pm" },
-        { day: "Sun", time: "11am to 6pm" }
-      ],
-      description: "Flash collection available during SR Weekend.",
-      access: null,
-      cta: { label: "Open in Apple Maps", kind: "apple-place", query: "Certified Tattoo Studios East Colfax" },
-      map: [{ x: 376, y: 664, anchor: "right", arrow: "e" }]
+      mapsQuery: "Certified Tattoo Studios East Colfax",
+      lat: 39.7403, lng: -104.9496,
+      hours: [{ day: "Nov 9 to 30", time: "During studio hours" }],
+      description: "An exclusive mike. flash collection, bookable at Certified's Denver studios.",
+      cta: { label: "Open in Apple Maps", kind: "apple-place" }
     },
     {
       id: "denver-improv",
-      enabled: true,
-      type: "edge",
       name: "Denver Improv",
       label: "Denver Improv",
       distance: "20 min northeast",
       address: "8246 Northfield Blvd, Denver, CO 80238",
+      mapsQuery: "Denver Improv",
+      lat: 39.7837, lng: -104.8918,
       hours: [{ day: "Sun", time: "8:30pm" }],
       description: "Comedy night to close out the weekend.",
-      access: null,
-      cta: { label: "Open in Apple Maps", kind: "apple-place", query: "Denver Improv" },
-      map: [{ x: 376, y: 24, anchor: "right", arrow: "ne" }]
+      cta: { label: "Open in Apple Maps", kind: "apple-place" }
     }
+  ],
+
+  /* Drawn landmarks for orientation. Not tappable. */
+  landmarks: [
+    { id: "union-station", name: "Union Station", art: "union-station", lat: 39.75314, lng: -105.00013 },
+    { id: "capitol", name: "State Capitol", art: "capitol", lat: 39.73927, lng: -104.98484 }
   ]
 };
