@@ -118,7 +118,7 @@ window.SR_MAP = {
         { day: "Sat", time: "9am to 5pm" },
         { day: "Sun", time: "9am to 1pm" }
       ],
-      description: "Questions? Find the team in orange shirts and hats.",
+      description: "Questions? A Super Steve will be here throughout the weekend to help.",
       cta: { label: "Message a Super Steve", kind: "help" },
       short: "Help desk",
       spots: [{ level: "lobby", u: 86, v: 12 }]
@@ -136,7 +136,6 @@ window.SR_MAP = {
         { day: "Sun", time: "8am to noon" }
       ],
       description: "SR Weekend store and retail hub. Hotel guests get first access at 4pm Friday, with public access from 5pm.",
-      access: "Room key for the 4pm window Friday",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
       short: "Parlur",
       spots: [{ level: "lobby", u: 8, v: 4 }]
@@ -158,19 +157,19 @@ window.SR_MAP = {
     {
       id: "living-album",
       minor: true,
-      row: "On the mezzanine during the Mingle, then in the Parlur",
-      name: "Living Album",
+      row: "On the mezzanine during the Mingle, then in the Parlur Room",
+      name: "Living Album Listening Booth",
       icon: "headphones",
-      where: "Friday on the mezzanine during the Stevenson Mingle. Saturday and Sunday in the Parlur lounge",
+      where: "Friday on the mezzanine during the Stevenson Mingle. Saturday and Sunday in the Parlur Room",
       level: "Level 2 on Friday, Lobby level after",
       hours: [
         { day: "Fri", time: "6 to 8pm", note: "Mezzanine, during the Stevenson Mingle" },
-        { day: "Sat", time: "During Parlur hours", note: "Parlur lounge" },
-        { day: "Sun", time: "During Parlur hours", note: "Parlur lounge" }
+        { day: "Sat", time: "During Parlur hours", note: "Parlur Room" },
+        { day: "Sun", time: "During Parlur hours", note: "Parlur Room" }
       ],
-      description: "Step in, put on headphones and explore mike.'s album The In-Betweens through the Living Album.",
+      description: "Step in, put on headphones and listen.",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      short: "Living Album",
+      short: "Listening Booth",
       spots: [{ level: "level2", u: 58, v: 30, tag: "Fri" }, { level: "lobby", u: 6, v: 30, tag: "Sat, Sun" }]
     },
     {
@@ -179,7 +178,7 @@ window.SR_MAP = {
       row: "In the Parlur and the main lobby",
       name: "Content stations",
       icon: "camera",
-      where: "Inside the Parlur near the lounge, plus a photo moment in the lobby",
+      where: "Inside the Parlur Room, plus a photo moment in the lobby",
       level: "Lobby level",
       hours: [{ day: "", time: "Times", tbc: true }],
       description: "Grab a photo.",
@@ -196,7 +195,7 @@ window.SR_MAP = {
       where: "South Convention Lobby, top of the escalators",
       level: "Level 2",
       hours: [
-        { day: "6 to 8pm", time: "Open to everyone", note: "Stevenson Mingle with DJ, bar, light bites, shopping and the Living Album" },
+        { day: "6 to 8pm", time: "Open to everyone", note: "Stevenson Mingle with DJ, bar, light bites, shopping and the Living Album Listening Booth" },
         { day: "8pm on", time: "Ticket holders only", note: "Merch stays open through the after party" }
       ],
       description: "Friday night on the mezzanine starts as the Stevenson Mingle, then turns over to listening party ticket holders at 8pm.",
@@ -208,7 +207,7 @@ window.SR_MAP = {
       id: "grand-ballroom",
       row: "Listening party, Fri doors 8pm",
       name: "Grand Ballroom",
-      subtitle: "The In-Betweens listening party",
+      subtitle: "Listening party",
       icon: "disc",
       where: "",
       level: "Level 2",

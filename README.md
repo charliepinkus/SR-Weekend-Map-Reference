@@ -25,7 +25,7 @@ Add `&clean=1` to hide the Design reference tag.
 
 ## Art direction
 
-The basemap sits under an aged-paper wash (`--ground-wash` in `styles.css`) so land reads warm and deep while streets and labels stay dark. Landmark labels use small designed chips. The Sheraton card opens as a wide hotel inset over the map on desktop, with the illustrated two-level guide beside the list of spots. Primary hotel spots (help desk, Parlur, Mezzanine, Grand Ballroom) get full pins; the café, Living Album and content stations are secondary. Stevenson Mingle lives on the Mezzanine card as its 6 to 8pm event.
+The basemap sits under an aged-paper wash (`--ground-wash` in `styles.css`) so land reads warm and deep while streets and labels stay dark. Landmark labels use small designed chips. The Sheraton card opens as a wide hotel inset over the map on desktop, with the illustrated two-level guide beside the list of spots. Primary hotel spots (help desk, Parlur, Mezzanine, Grand Ballroom) get full pins; the café, Living Album Listening Booth and content stations are secondary. Stevenson Mingle lives on the Mezzanine card as its 6 to 8pm event.
 
 ## Basemap, ink style
 
