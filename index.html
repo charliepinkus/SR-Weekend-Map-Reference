@@ -9,14 +9,12 @@
   <link rel="icon" href="assets/sr-mark.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/bricolage-grotesque-latin-800-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/instrument-sans-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="vendor/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="app" id="app">
-    <div class="map" id="map">
-      <svg class="base" id="svg" aria-label="Map of downtown Denver"><g id="world"></g></svg>
-      <div class="ov" id="ov"></div>
-    </div>
+    <div class="map" id="map" aria-label="SR Weekend map of Denver"></div>
 
     <a class="brand" id="brand" href="./">
       <img src="assets/sr-mark.svg" alt="" width="24" height="32">
@@ -33,10 +31,7 @@
       <button type="button" id="home" aria-label="Back to the Sheraton"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5"/><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5"/></svg></button>
     </div>
 
-    <div class="foot" id="foot">
-      <span class="osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
-      <span class="ref-tag" id="refTag">Design reference</span>
-    </div>
+    <div class="foot" id="foot"><span class="ref-tag" id="refTag">Design reference</span></div>
 
     <aside class="card" id="card" hidden aria-live="polite">
       <div class="grab" id="grab" aria-hidden="true"><span></span></div>
@@ -47,8 +42,8 @@
     </aside>
   </div>
 
-  <script src="vendor/d3.min.js"></script>
-  <script src="data/basemap.js"></script>
+  <script src="vendor/leaflet.js"></script>
+  <script src="data/geo.js"></script>
   <script src="locations.js"></script>
   <script src="app.js"></script>
 </body>

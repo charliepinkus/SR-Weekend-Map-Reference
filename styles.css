@@ -57,10 +57,10 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--black); outline-offset: 3px; border-radius: 8px; }
 
 .app { position: fixed; inset: 0; }
-/* Light paper grain over the map, for a printed feel */
-.map::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35; mix-blend-mode: multiply;
+/* Light paper grain over the tiles, for a printed feel */
+.map::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.35; mix-blend-mode: multiply; z-index: 405;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .38  0 0 0 0 .28  0 0 0 .22 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>"); }
-.map { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
+.map { position: absolute; inset: 0; overflow: hidden; touch-action: none; z-index: 0; }
 .base { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .base:active { cursor: grabbing; }
 .ov { position: absolute; inset: 0; pointer-events: none; }
@@ -277,7 +277,7 @@ a { color: inherit; }
 .hd { margin: 14px -8px 0; }
 .hd svg { display: block; width: 100%; height: auto; overflow: visible; }
 .hd.compact { margin: 12px 0 0; }
-.hd.compact svg { max-height: 130px; }
+.hd.compact svg { max-height: 175px; }
 .hd .plate { fill: var(--paper); stroke: var(--black); stroke-width: 1.5; stroke-linejoin: round; }
 .hd .side { fill: #E2DAC2; stroke: var(--black); stroke-width: 1.5; stroke-linejoin: round; }
 .hd .side2 { fill: #D5CBAE; stroke: var(--black); stroke-width: 1.5; stroke-linejoin: round; }
@@ -336,8 +336,77 @@ a { color: inherit; }
   .card-body { padding: 24px 26px 26px; }
   .c-name { font-size: 34px; }
   .has-sel .ctrl { right: calc(var(--panel-w) + 40px); }
-  .hd.compact svg { max-height: 190px; }
+  .hd.compact svg { max-height: 210px; }
   .has-sel .ov .edge:not(.is-on) { opacity: 0; pointer-events: none; }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+
+
+/* ================= Leaflet map (v3) ================= */
+:root {
+  /* Warm SR tint over the CARTO Voyager tiles. Edit to taste. */
+  --tile-filter: sepia(0.34) saturate(0.7) hue-rotate(-6deg) brightness(1.02) contrast(0.96);
+  --label-filter: sepia(0.2) saturate(0.45) contrast(1.08);
+}
+.leaflet-container { background: var(--ground); font-family: var(--f-body); }
+.tiles-base { filter: var(--tile-filter); }
+.tiles-labels { filter: var(--label-filter); }
+.leaflet-control-attribution { background: rgba(251, 250, 244, 0.85) !important; font-size: 10px; color: var(--ink-3); padding: 1px 6px !important; border-top-left-radius: 6px; }
+.leaflet-control-attribution a { color: var(--ink-2); }
+.sr-m { width: 0 !important; height: 0 !important; background: none; border: 0; }
+.sr-m.culled { visibility: hidden; }
+.sr-m.nolabel .pin-lbl, .sr-m.nolabel .anc-lbl { visibility: hidden; }
+.leaflet-marker-icon.sr-m { overflow: visible; }
+
+/* Red Rocks, the second anchor */
+.anc { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.anc-badge {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+  width: 58px; height: 58px; border-radius: 50%; background: var(--paper);
+  border: 1.5px solid var(--black); box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center; transition: transform 200ms;
+}
+.anc-badge svg { width: 38px; height: 26px; display: block; margin-top: -2px; }
+.anc-lbl { position: absolute; left: 36px; top: -20px; white-space: nowrap; display: flex; flex-direction: column; pointer-events: none;
+  text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 1px var(--paper); }
+.anc-lbl b { font-family: var(--f-display); font-weight: 800; font-size: 18px; line-height: 1.02; letter-spacing: -0.01em; }
+.anc-lbl small { font-size: 12.5px; font-weight: 600; color: var(--crimson-deep); margin-top: 2px; }
+.anchor.is-on .anc-badge { transform: translate(-50%, -50%) scale(1.1); background: var(--black); }
+.c-kind i.anchor { background: var(--paper); box-shadow: inset 0 0 0 2.5px var(--crimson); }
+
+/* The drive */
+.rt-case, .rt-line { transition: stroke-width 200ms; }
+.route-on .rt-case { stroke-width: 12px; }
+.route-on .rt-line { stroke-width: 7.5px; }
+.route-pill { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none; }
+.route-pill span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--crimson); color: var(--sand);
+  border: 1.5px solid var(--black); box-shadow: 2px 2px 0 var(--black); font-weight: 600; font-size: 12.5px; }
+.sr-m.culled .route-pill, .culled > .route-pill { visibility: hidden; }
+
+/* Landmarks and the HQ tag at regional zoom */
+.lm .lm-name { text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper); }
+.z-regional .hq-t small { display: none; }
+.z-regional .hq-tag { min-height: 42px; padding: 6px 12px 6px 9px; }
+.z-regional .hq-help { min-height: 32px; font-size: 12.5px; }
+
+/* Hotel guide additions */
+.hd .hint { font-family: var(--f-body); font-weight: 600; font-size: 11px; fill: var(--ink-3); }
+.hd .lvl { font-size: 14px; }
+.hd .hp-lbl { font-size: 12.5px; }
+
+/* Mobile placement of chrome */
+.ctrl { bottom: calc(34px + env(safe-area-inset-bottom, 0px)); }
+.foot { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+.offline .leaflet-tile-container img { display: none; }
+
+/* At regional zoom the HQ tag sits above the hotel, pointing down,
+   so it never covers the start of the drive. */
+.z-regional .hq-group { transform: translate(-50%, calc(-100% - 12px)); }
+.z-regional .hq-tag::before { display: none; }
+.z-regional .hq-help::after {
+  content: ""; position: absolute; left: 50%; bottom: -8px; width: 13px; height: 13px; transform: translateX(-50%) rotate(45deg);
+  background: var(--orange); border-right: 1.5px solid var(--black); border-bottom: 1.5px solid var(--black);
+}
+.hq-help { position: relative; }
+.z-regional .hq::after { content: ""; position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--crimson); border: 2px solid var(--black); box-shadow: 0 0 0 3px var(--paper); }

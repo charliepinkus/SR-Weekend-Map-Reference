@@ -1,45 +1,53 @@
 # SR Weekend Map, design reference
 
-A design and UX reference for the map on the SR Weekend site (Sheraton Denver Downtown, Nov 13 to 15, 2026). It's static HTML, CSS and JavaScript, with no build step and no API keys, so it runs as is on GitHub Pages.
+A visual and interaction reference for the SR Weekend map (Sheraton Denver Downtown, Nov 13 to 15, 2026). It's a static site with no build step and no API keys, so it runs as is on GitHub Pages.
 
-## What it shows
+## How it works
 
-- A real map of downtown Denver built from OpenStreetMap data (streets, blocks, building footprints, parks, rivers), styled in the SR palette and rotated so the downtown grid runs square.
-- The Sheraton as SR Weekend HQ, with its real footprint in crimson and the Super Steve Help Desk attached.
-- Tapping the Sheraton opens a guide to the spots inside, across Lobby level and Level 2.
-- City pins for Whiskey Row and Flyhi, a shuttle pickup marker, and off-map chips for Red Rocks, Certified Tattoo and Denver Improv that point the real direction.
-- City cards hand off to Apple Maps, with Google Maps as a secondary link.
+- **One continuous map.** It opens on a real Denver-area map showing the Sheraton, Red Rocks, the drive between them, Certified Tattoo and Denver Improv. Zooming in reveals Whiskey Row, Flyhi and Union Station, and at street level the Sheraton's real building footprints appear in crimson.
+- **Sheraton.** Tapping the Sheraton opens the hotel guide, a two-level illustrated view of every SR Weekend spot inside. Tapping any spot opens its card.
+- **Other places.** Tapping any other place opens a short card with an Apple Maps button.
+- **Red Rocks.** Tapping Red Rocks frames the whole drive from the Sheraton.
 
 ## Screenshot links
 
 Add `&clean=1` to hide the Design reference tag.
 
 - Default: `/`
-- Sheraton: `/?loc=sheraton`
+- Downtown zoom: `/?view=downtown`
+- Sheraton and hotel guide: `/?loc=sheraton`
 - Help desk: `/?loc=help-desk`
 - Parlur: `/?loc=parlur`
+- Red Rocks and the route: `/?loc=red-rocks`
 - Whiskey Row: `/?loc=whiskey-row`
 - Flyhi: `/?loc=flyhi`
 - Certified Tattoo: `/?loc=certified-tattoo`
-- Red Rocks: `/?loc=red-rocks`
 
 ## Files
 
 - `index.html`, `styles.css`, `app.js` are the page, styling and behavior
-- `locations.js` holds every place, all copy and settings. Edit this file
-- `data/basemap.js` is the processed Denver map data
-- `vendor/d3.min.js` handles pan and zoom
-- `fonts/`, `assets/` hold the stand-in fonts and SR monogram
-- `tools/prep.py` is the script that built `data/basemap.js`, for reference
+- `locations.js` holds every place, the route, all copy and settings. Edit this file
+- `data/geo.js` holds the Sheraton building footprints and an offline street fallback, from OpenStreetMap
+- `vendor/leaflet.*` is the map library, Leaflet 1.9.4
+- `fonts/` and `assets/` hold the stand-in fonts and the SR monogram
 
-## Editing places
+## Editing
 
-City and off-map places use real `lat` and `lng`. Places inside the Sheraton use `spots`, a position on the hotel diagram. Every place has a `name`, `address` or `where`, `hours`, a one or two sentence `description`, an optional `access` tag and one `cta`. Any text set to exactly `"TBC"` shows as a TBC chip. An `address` of `null` shows Address TBC.
+Each place in `locations.js` has these fields:
 
-## Notes for the production build
+- `show`, `type` (`anchor`, `city` or `utility`), `name` and `short`
+- `lat` and `lng`, which set where the marker sits
+- `address`, which is what the card shows and what Apple Maps receives
+- `hours`, `description`, `access` and one `cta`
+- optional `appleMapsUrl` or `googleMapsUrl` overrides
+- optional `minZoom`, which hides a marker until the map is zoomed in
 
-- The bundled street data covers downtown and stops at Broadway, so the Capitol Hill side is drawn with only Colfax, Broadway and the Capitol. For production, a styled vector-tile map (MapLibre with OpenFreeMap, Protomaps or Mapbox) using these same colors gives full coverage.
-- The rotated grid is a design choice. A north-up map works too if the team prefers it to match Apple Maps.
-- Flyhi's position comes from its address at 16th and Tremont. The offer and hours are TBC.
-- Certified's Nov 9 to 30 dates come from the deal terms. The pin is the East Colfax studio.
-- Map data © OpenStreetMap contributors, ODbL. The attribution stays visible on the map.
+Hotel spots use `spots` positions on the diagram, plus a `short` label.
+
+Any text set to exactly `"TBC"` shows as a TBC chip.
+
+## Basemap and route
+
+- **Basemap.** CARTO Voyager raster tiles, tinted warm with the `--tile-filter` CSS variable. They need no key but do require attribution, which stays visible. For production, a styled vector map (MapLibre with OpenFreeMap, Protomaps or Mapbox) using the same colors is the stronger option.
+- **Route.** A hand-traced path sits in `locations.js`. On load, the page asks the public OSRM demo router for exact road geometry and swaps it in. The demo router isn't for production use, so the final build should store its own route or use a routing API.
+- **Drive time.** The "about 30 min" copy comes from the original brief.

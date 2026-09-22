@@ -2,23 +2,16 @@
 (function () {
   "use strict";
 
-  const B = window.SR_BASEMAP, M = B.meta, D = window.SR_MAP, CFG = D.config;
+  const D = window.SR_MAP, CFG = D.config, GEO = window.SR_GEO || {};
   const params = new URLSearchParams(location.search);
   const $ = (id) => document.getElementById(id);
-  const app = $("app"), svgEl = $("svg"), ov = $("ov"), card = $("card"), cardBody = $("cardBody"), cardScroll = $("cardScroll");
+  const app = $("app"), card = $("card"), cardBody = $("cardBody"), cardScroll = $("cardScroll");
   const isDesk = () => window.matchMedia("(min-width: 900px)").matches;
 
   if (params.get("clean") === "1") document.body.classList.add("clean");
   if (params.get("debug") === "1") document.body.classList.add("debug");
   $("brandName").textContent = CFG.eventName;
   $("brandSub").textContent = CFG.city + ", " + CFG.dates.replace(/, \d{4}$/, "");
-
-  /* ---------- Projection (same math as tools/prep.py) ---------- */
-  const RC = Math.cos(M.rot), RS = Math.sin(M.rot);
-  function proj(lat, lng) {
-    const x = (lng - M.lon0) * M.kx, y = (lat - M.lat0) * M.ky;
-    return [x * RC - y * RS, -(x * RS + y * RC)];
-  }
 
   /* ---------- Icons ---------- */
   const I = {
@@ -31,8 +24,9 @@
     disc: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="1.8"/>',
     glass: '<path d="M7 5h10l-5 7z"/><path d="M12 12v6.5M8.5 19h7"/>',
     star: '<path d="M12 4.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7z"/>',
+    pen: '<path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13 7l4 4"/>',
+    mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5v3"/>',
     bus: '<rect x="5.5" y="4.5" width="13" height="13" rx="2.5"/><path d="M5.5 11h13M8.5 17.5v2M15.5 17.5v2"/>',
-    arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
     pin: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
     list: '<path d="M9 7h11M9 12h11M9 17h11"/><circle cx="4.8" cy="7" r="1"/><circle cx="4.8" cy="12" r="1"/><circle cx="4.8" cy="17" r="1"/>',
     chat: '<path d="M4.5 5.5h15v10h-8l-4 3.5v-3.5h-3z"/>',
@@ -42,299 +36,227 @@
     route: '<path d="M6 19V9a4 4 0 0 1 4-4h8M14 1.5L18 5l-4 3.5"/>'
   };
   const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[n] || ""}</svg>`;
-  const ROCKS = '<svg class="edge-rocks" viewBox="0 0 36 24" aria-hidden="true"><path d="M1 22 L6 11 L10 14 L15 4 L21 13 L25 9 L35 22 Z" fill="#BA514E" stroke="#121111" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 22 L13 16 M20 22 L24 15" stroke="#121111" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>';
+  const ROCKS = '<svg viewBox="0 0 44 30" aria-hidden="true"><path d="M2 27 L8 13 L13 17 L19 5 L26 16 L31 11 L42 27 Z" fill="#BA514E" stroke="#121111" stroke-width="1.8" stroke-linejoin="round"/><path d="M11 27 L16 20 M24 27 L29 19" stroke="#121111" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>';
   const ART = {
-    "union-station": '<svg viewBox="0 0 64 40" width="62" height="39"><path class="f" d="M3 22h14v16H3zM47 22h14v16H47z"/><path class="f" d="M17 14h30v24H17z"/><path d="M17 14 L32 8.5 L47 14"/><path d="M21 38V27a3 3 0 0 1 6 0v11M29 38V27a3 3 0 0 1 6 0v11M37 38V27a3 3 0 0 1 6 0v11"/><rect class="fc" x="21" y="1" width="22" height="4.5" rx="1"/><path d="M25 5.5v4M39 5.5v4"/><path d="M6 28h8M50 28h8M6 33h8M50 33h8"/><path d="M1 38h62"/></svg>',
-    capitol: '<svg viewBox="0 0 44 50" width="40" height="46"><path class="f" d="M4 48V35h36v13z"/><path d="M10 48v-9M16 48v-9M22 48v-9M28 48v-9M34 48v-9M4 38.5h36"/><path class="f" d="M12 35v-6h20v6z"/><path class="f" d="M13 29a9 10.5 0 0 1 18 0z"/><path d="M22 18.5v-7M19.5 11.5h5M17 29v-4M22 29v-5M27 29v-4"/><path d="M1 48h42"/></svg>'
+    "union-station": '<svg viewBox="0 0 64 40" width="58" height="36"><path class="f" d="M3 22h14v16H3zM47 22h14v16H47z"/><path class="f" d="M17 14h30v24H17z"/><path d="M17 14 L32 8.5 L47 14"/><path d="M21 38V27a3 3 0 0 1 6 0v11M29 38V27a3 3 0 0 1 6 0v11M37 38V27a3 3 0 0 1 6 0v11"/><rect class="fc" x="21" y="1" width="22" height="4.5" rx="1"/><path d="M25 5.5v4M39 5.5v4"/><path d="M6 28h8M50 28h8M6 33h8M50 33h8"/><path d="M1 38h62"/></svg>',
+    capitol: '<svg viewBox="0 0 44 50" width="38" height="43"><path class="f" d="M4 48V35h36v13z"/><path d="M10 48v-9M16 48v-9M22 48v-9M28 48v-9M34 48v-9M4 38.5h36"/><path class="f" d="M12 35v-6h20v6z"/><path class="f" d="M13 29a9 10.5 0 0 1 18 0z"/><path d="M22 18.5v-7M19.5 11.5h5M17 29v-4M22 29v-5M27 29v-4"/><path d="M1 48h42"/></svg>'
   };
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
-  /* ---------- Base map ---------- */
-  const world = d3.select("#world");
-  const layer = (d, cls, style) => { const p = world.append("path").attr("d", d).attr("class", cls); if (style) p.attr("style", style); return p; };
-  layer(B.broadway, "l-corridor", "stroke-width:70");
-  layer(B.colfax, "l-corridor", "stroke-width:70");
-  layer(B.land, "l-land");
-  layer(B.land, "l-land-edge");
-  layer(B.parks, "l-park");
-  layer(B.rivers, "l-water", "stroke-width:14");
-  // Casings first, for a drawn edge on every street
-  [[B.road_residential, 8], [B.road_tertiary, 11], [B.road_secondary, 13], [B.road_primary, 16], [B.road_motorway, 24], [B.broadway, 16], [B.colfax, 16], [B.mall, 18]]
-    .forEach(([d, w]) => layer(d, "l-case", `stroke-width:${w + 3.2}`));
-  layer(B.road_residential, "l-road", "stroke-width:8");
-  layer(B.road_tertiary, "l-road", "stroke-width:11");
-  layer(B.road_secondary, "l-road major", "stroke-width:13");
-  layer(B.road_primary, "l-road major", "stroke-width:16");
-  layer(B.road_motorway, "l-road major", "stroke-width:24");
-  layer(B.broadway, "l-road major", "stroke-width:16");
-  layer(B.colfax, "l-road major", "stroke-width:16");
-  layer(B.mall, "l-mall", "stroke-width:18");
-  layer(B.mall, "l-mall-dash", "stroke-width:2.2;stroke-dasharray:1 7");
-  layer(B.buildings, "l-bldg");
-  layer(B.hotel_blocks, "l-hotel-block");
-  layer(B.hotel_buildings, "l-hotel");
-  const HX = M.hotel_center[0];
-  layer(`M${HX} 716 V751`, "l-bridge", "stroke-width:4");   // skybridge over Court Pl
+  /* ---------- Map ---------- */
+  const map = L.map("map", {
+    zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
+    minZoom: 9.5, maxZoom: 19, maxBounds: [[39.35, -105.75], [40.15, -104.45]], maxBoundsViscosity: 0.8,
+    tap: true, attributionControl: true
+  });
+  map.attributionControl.setPrefix(false);
+  map.createPane("routePane").style.zIndex = 410;
+  map.createPane("labelPane").style.zIndex = 430;
+  map.getPane("labelPane").style.pointerEvents = "none";
+  map.createPane("hotelPane").style.zIndex = 440;
 
-  /* ---------- Overlay ---------- */
-  const items = [];
-  function add(el, x, y, o) {
-    el.classList.add("oi");
-    ov.appendChild(el);
-    const it = Object.assign({ el, x, y, pri: 10, minK: 0, fixed: false, rot: 0 }, o || {});
-    items.push(it);
+  const base = L.tileLayer(CFG.basemap.base, { subdomains: "abcd", maxZoom: 20, className: "tiles-base", attribution: CFG.basemap.attribution }).addTo(map);
+  L.tileLayer(CFG.basemap.labels, { subdomains: "abcd", maxZoom: 20, className: "tiles-labels", pane: "labelPane" }).addTo(map);
+
+  // If tiles can't load (offline preview), draw downtown streets from bundled OSM data.
+  let tileOk = 0, tileErr = 0, fallbackOn = false;
+  base.on("tileload", () => { tileOk++; });
+  base.on("tileerror", () => {
+    tileErr++;
+    if (!fallbackOn && tileErr > 6 && tileOk === 0 && GEO.fallbackRoads) {
+      fallbackOn = true;
+      app.classList.add("offline");
+      const w = { motorway: 7, primary: 5, secondary: 4, tertiary: 3 };
+      Object.keys(w).forEach((k) => (GEO.fallbackRoads[k] || []).forEach((line) =>
+        L.polyline(line, { color: "#FFFFFF", weight: w[k], opacity: 1, interactive: false }).addTo(map)));
+    }
+  });
+
+  let sel = null;
+  const HQ = D.hq;
+  const HQLL = [HQ.lat, HQ.lng];
+
+  /* ---------- Route ---------- */
+  const R = D.route;
+  let routeCase, routeLine, routePill;
+  if (R && R.show) {
+    routeCase = L.polyline(R.path, { pane: "routePane", className: "rt-case", color: "#121111", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
+    routeLine = L.polyline(R.path, { pane: "routePane", className: "rt-line", color: "#BA514E", weight: 5.5, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
+    const mid = R.path[Math.floor(R.path.length * 0.55)];
+    routePill = L.marker(mid, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<div class="route-pill"><span>${esc(R.label)}</span></div>` }) }).addTo(map);
+    if (R.snapToRoads) {
+      const a = R.path[0], b = R.path[R.path.length - 1];
+      fetch(`https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((j) => {
+          const c = j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates;
+          if (!c || c.length < 3) return;
+          const ll = c.map((p) => [p[1], p[0]]);
+          routeCase.setLatLngs(ll); routeLine.setLatLngs(ll);
+          routePill.setLatLng(ll[Math.floor(ll.length * 0.55)]);
+        }).catch(() => {});
+    }
+  }
+
+  /* ---------- Sheraton footprint ---------- */
+  const foot = L.layerGroup((GEO.hotelFootprints || []).map((poly) =>
+    L.polygon(poly, { pane: "hotelPane", color: "#121111", weight: 1.6, fillColor: "#BA514E", fillOpacity: 1, interactive: true })
+      .on("click", () => select(HQ.id))));
+
+  /* ---------- Markers ---------- */
+  const markers = [];
+  function addMarker(latlng, html, o) {
+    const m = L.marker(latlng, { icon: L.divIcon({ className: "sr-m " + (o.cls || ""), html, iconSize: [0, 0] }), zIndexOffset: o.z || 0, keyboard: false, interactive: !o.static });
+    const it = Object.assign({ m, latlng, minZoom: 0, pri: 10, on: false }, o);
+    if (!o.static) m.on("click", (e) => {
+      const t = e.originalEvent && e.originalEvent.target.closest && e.originalEvent.target.closest("[data-sel]");
+      select(t ? t.dataset.sel : o.id);
+    });
+    markers.push(it);
     return it;
   }
-  const div = (cls, html) => { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; return d; };
 
-  // Street labels (drawn from the real street positions in basemap.js)
-  const R = M.rows, C = M.cols, A = M.anchors;
-  const mid = (a, b) => (a + b) / 2;
-  const STREETS = [
-    ["16th Street Mall", C["16th Street Mall"], mid(R["Champa Street"], R["Stout Street"]), -90, 0, "mall", 46],
-    ["15th St", C["15th Street"], mid(R["Welton Street"], R["California Street"]), -90, 0.2, "", 32],
-    ["17th St", C["17th Street"], mid(R["Curtis Street"], R["Champa Street"]), -90, 0.2, "", 32],
-    ["20th St", C["20th Street"], mid(R["Larimer Street"], R["Lawrence Street"]), -90, 0.2, "", 31],
-    ["18th St", C["18th Street"], mid(R["California Street"], R["Stout Street"]), -90, 0.36, "", 24],
-    ["14th St", C["14th Street"], mid(R["Arapahoe Street"], R["Curtis Street"]), -90, 0.36, "", 24],
-    ["Market St", mid(C["16th Street Mall"], C["17th Street"]), R["Market Street"], 0, 0.2, "", 31],
-    ["Larimer St", mid(C["18th Street"], C["19th Street"]), R["Larimer Street"], 0, 0.22, "", 30],
-    ["Champa St", mid(C["17th Street"], C["18th Street"]), R["Champa Street"], 0, 0.36, "", 24],
-    ["Court Pl", mid(C["14th Street"], C["15th Street"]), R["Court Place"], 0, 0.3, "", 26],
-    ["Wynkoop St", mid(C["17th Street"], C["18th Street"]), R["Wynkoop Street"], 0, 0.3, "", 25],
-    ["Broadway", A["Broadway"][0], A["Broadway"][1], A["Broadway"][2], 0, "", 33],
-    ["Colfax Ave", A["Colfax Ave"][0], A["Colfax Ave"][1], A["Colfax Ave"][2], 0, "", 33],
-    ["Speer Blvd", A["Speer Blvd"][0], A["Speer Blvd"][1], A["Speer Blvd"][2], 0.2, "", 30],
-    ["South Platte River", A["South Platte River"][0], A["South Platte River"][1], A["South Platte River"][2], 0.2, "water", 28]
-  ];
-  STREETS.forEach(([t, x, y, rot, minK, cls, pri]) => add(div("sl " + cls, `<span>${t}</span>`), x, y, { rot, minK, pri, kind: "label" }));
-
-  const HOODS = [
-    ["LoDo", 330, -640, 0.18, ""],
-    ["Auraria", -860, 420, 0.18, ""],
-    ["Civic Center", M.civic[0] - 60, M.civic[1] + 90, 0.26, ""],
-    ["Capitol Hill", 560, 1520, 0, "big"],
-    ["Golden Triangle", -560, 1480, 0.26, ""]
-  ];
-  HOODS.forEach(([t, x, y, minK, cls]) => add(div("nb " + cls, `<span>${t}</span>`), x, y, { minK, pri: 12, kind: "label" }));
-
-  (D.landmarks || []).forEach((l) => {
-    const [x, y] = proj(l.lat, l.lng);
-    add(div("lm", `<div class="lm-in">${ART[l.art] || ""}<span class="lm-name">${esc(l.name)}</span></div>`), x, y, { pri: 40, minK: 0.16, kind: "label" });
-  });
-
-  // Sheraton HQ marker, hung under the hotel footprint
-  const hq = D.hq;
-  const hqEl = document.createElement("div");
-  hqEl.className = "hq";
-  hqEl.innerHTML = `<div class="hq-group">
-      <button class="hq-tag" type="button" data-sel="${hq.id}"><span class="hq-mark" aria-hidden="true"></span>
-        <span class="hq-t"><b>${esc(hq.tag)}</b><small>${esc(hq.name)}</small></span></button>
+  // Home base
+  const hqIt = addMarker(HQLL, `<div class="hq-group">
+      <button class="hq-tag" type="button" data-sel="${HQ.id}"><span class="hq-mark" aria-hidden="true"></span>
+        <span class="hq-t"><b>${esc(HQ.tag)}</b><small>${esc(HQ.name)}</small></span></button>
       <button class="hq-help" type="button" data-sel="help-desk"><i>?</i>Super Steve Help Desk</button>
-    </div>`;
-  const hqIt = add(hqEl, HX, 848, { pri: 100, fixed: true, id: hq.id });
+    </div>`, { id: HQ.id, cls: "hq", z: 1000, pri: 100 });
 
-  // City pins
-  D.city.forEach((p) => {
-    const [x, y] = proj(p.lat, p.lng);
-    const el = document.createElement("div");
-    el.dataset.id = p.id;
-    if (p.utility) {
-      el.className = "util";
-      el.innerHTML = `<button class="util-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}"><span class="util-sq">${icon(p.icon)}</span></button>
+  const byId = {};
+  byId[HQ.id] = Object.assign({ _t: "hq" }, HQ);
+  D.hotel.forEach((p) => { byId[p.id] = Object.assign({ _t: "hotel" }, p); });
+
+  (D.places || []).filter((p) => p.show !== false).forEach((p) => {
+    byId[p.id] = Object.assign({ _t: p.type }, p);
+    let html;
+    if (p.type === "anchor") {
+      html = `<button class="anc" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
+          <span class="anc-badge">${ROCKS}</span>
+          <span class="anc-lbl"><b>${esc(p.name.replace(/ Amphitheatre$/, ""))}</b><small>${esc(p.short || "")}</small></span></button>`;
+      addMarker([p.lat, p.lng], html, { id: p.id, cls: "anchor", z: 900, pri: 95 });
+    } else if (p.type === "utility") {
+      html = `<button class="util-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}"><span class="util-sq">${icon(p.icon)}</span></button>
         <span class="pin-lbl"><b>${esc(p.name)}</b></span>`;
+      addMarker([p.lat, p.lng], html, { id: p.id, cls: "util", z: 300, pri: 50, minZoom: p.minZoom || 0, label: true });
     } else {
-      el.className = "pin" + (p.labelSide === "left" ? " left" : "");
-      el.innerHTML = `<button class="pin-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
+      html = `<button class="pin-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
           <svg class="pin-drop" viewBox="0 0 32 40"><path class="body" d="M16 38.5C16 38.5 3 25.5 3 15.5a13 13 0 0 1 26 0c0 10-13 23-13 23z"/><g class="ic" transform="translate(8.5 8) scale(.625)">${I[p.icon] || ""}</g></svg></button>
         <span class="pin-lbl"><b>${esc(p.name)}</b>${p.short ? `<small>${esc(p.short)}</small>` : ""}</span>`;
+      addMarker([p.lat, p.lng], html, { id: p.id, cls: "pin", z: 500, pri: 70, minZoom: p.minZoom || 0, label: true });
     }
-    add(el, x, y, { pri: p.utility ? 60 : 80, fixed: true, id: p.id, pin: true });
   });
 
-  // Off-map chips
-  const edgeRow = document.createElement("div");
-  edgeRow.className = "edge-row";
-  edgeRow.id = "edgeRow";
-  app.appendChild(edgeRow);
-  edgeRow.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-sel]");
-    if (b) { e.stopPropagation(); select(b.dataset.sel); }
-  });
-  const edges = D.edge.map((p) => {
-    const el = document.createElement("div");
-    el.className = "edge";
-    el.dataset.id = p.id;
-    el.innerHTML = `<button class="edge-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}, about ${esc(p.distance)}">
-        <span class="edge-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rot">${I.arrow}</g></svg></span>
-        <span class="edge-t"><b>${esc(p.label || p.name)}</b><small>${esc(p.distance)}</small></span>${p.icon === "rocks" ? ROCKS : ""}</button>`;
-    ov.appendChild(el);
-    el.classList.add("oi");
-    const [x, y] = proj(p.lat, p.lng);
-    return { el, x, y, p, rotEl: el.querySelector(".rot") };
+  (D.landmarks || []).forEach((l) => {
+    addMarker([l.lat, l.lng], `<div class="lm-in">${ART[l.art] || ""}<span class="lm-name">${esc(l.name)}</span></div>`,
+      { id: l.id, cls: "lm", static: true, pri: 20, minZoom: l.minZoom || 14 });
   });
 
-  ov.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-sel]");
-    if (b) { e.stopPropagation(); select(b.dataset.sel); }
-  });
-
-  /* ---------- Zoom and pan ---------- */
-  let T = d3.zoomIdentity;
-  const lb = M.land_bounds;
-  const zoom = d3.zoom()
-    .scaleExtent([0.14, 2.6])
-    .translateExtent([[lb[0] - 400, lb[1] - 400], [lb[2] + 1200, lb[3] + 700]])
-    .clickDistance(6)
-    .on("zoom", (e) => { T = e.transform; world.attr("transform", T); place(); })
-    .on("end", () => cull());
-  const svg = d3.select(svgEl).call(zoom);
-
-  function homeTransform() {
-    const w = innerWidth, h = innerHeight;
-    const hy = M.hotel_center[1];
-    if (isDesk()) {
-      const k = Math.min(h / 2350, w / 2700);
-      return d3.zoomIdentity.translate(w * 0.5 - k * HX, h * 0.6 - k * hy).scale(k);
-    }
-    const k = Math.min((w - 20) / 1150, (h - 150) / 2250);
-    return d3.zoomIdentity.translate(Math.max(122, w * 0.33) - k * HX, h * 0.58 - k * hy).scale(k);
-  }
-
-  function place() {
-    const k = T.k;
-    for (const it of items) {
-      const [sx, sy] = T.apply([it.x, it.y]);
-      const off = k < it.minK;
-      it.el.classList.toggle("off", off || it.culled === true);
-      it.el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)` + (it.rot ? ` rotate(${it.rot}deg)` : "");
-      if (it.pin) {
-        const lw = it.lw || (it.lw = it.el.querySelector(".pin-lbl").offsetWidth);
-        if (it.el.classList.contains("pin")) it.el.classList.toggle("left", sx + 24 + lw > innerWidth - 12);
-        else it.el.classList.toggle("right", sx - 20 - lw < 10);
+  /* ---------- Zoom-dependent layers and label culling ---------- */
+  function refresh() {
+    const z = map.getZoom();
+    markers.forEach((it) => {
+      const want = z >= it.minZoom;
+      if (want && !it.on) {
+        it.m.addTo(map); it.on = true;
+        const el = it.m.getElement();
+        if (el && sel && it.id !== HQ.id) el.classList.toggle("is-on", it.id === sel);
       }
-    }
-    placeEdges();
-  }
-
-  function viewRect() {
-    const w = innerWidth, h = innerHeight;
-    const r = { l: 14, t: isDesk() ? 96 : 74, r: w - (isDesk() ? 76 : 14), b: h - (isDesk() ? 48 : 44) };
-    if (!card.hidden) {
-      if (isDesk()) r.r = w - 400 - 44 - 64;
-      else r.b = h - card.getBoundingClientRect().height - 12;
-    }
-    return r;
-  }
-
-  function placeEdges() {
-    if (!isDesk()) {
-      edges.forEach((e) => {
-        if (e.el.parentNode !== edgeRow) { edgeRow.appendChild(e.el); e.el.style.transform = ""; }
-        const [px, py] = T.apply([e.x, e.y]);
-        const a = Math.atan2(py - innerHeight / 2, px - innerWidth / 2);
-        e.rotEl.setAttribute("transform", `rotate(${(a * 180 / Math.PI).toFixed(1)} 12 12)`);
-      });
-      return;
-    }
-    edges.forEach((e) => { if (e.el.parentNode !== ov) ov.appendChild(e.el); });
-    const v = viewRect();
-    const cx = (v.l + v.r) / 2, cy = (v.t + v.b) / 2;
-    const placed = [];
-    edges.forEach((e) => {
-      const [px, py] = T.apply([e.x, e.y]);
-      let dx = px - cx, dy = py - cy;
-      const ang = Math.atan2(dy, dx);
-      const bw = e.el.firstElementChild.offsetWidth || 160, bh = 46;
-      const hw = bw / 2 + 2, hh = bh / 2 + 2;
-      const tx = dx > 0 ? (v.r - hw - cx) / dx : (v.l + hw - cx) / dx;
-      const ty = dy > 0 ? (v.b - hh - cy) / dy : (v.t + hh - cy) / dy;
-      const t = Math.min(Math.abs(tx), Math.abs(ty));
-      let x = cx + dx * t, y = cy + dy * t;
-      x = Math.max(v.l + hw, Math.min(v.r - hw, x));
-      y = Math.max(v.t + hh, Math.min(v.b - hh, y));
-      const blocks = avoidRects();
-      for (let n = 0; n < 12; n++) {
-        const bad = blocks.find((q) => x - hw < q.right && q.left < x + hw && y - hh < q.bottom && q.top < y + hh);
-        if (!bad) break;
-        const up = bad.top - hh - 6, down = bad.bottom + hh + 6;
-        const upOk = up >= v.t + hh, downOk = down <= v.b - hh;
-        if (Math.abs(x - v.l) < Math.abs(x - v.r) || true) {
-          if (upOk && (!downOk || Math.abs(up - y) <= Math.abs(down - y))) y = up; else if (downOk) y = down; else break;
-        }
-      }
-      for (const q of placed) {
-        if (Math.abs(q.x - x) < (q.hw + hw) && Math.abs(q.y - y) < (bh + 6)) y = q.y + (y >= q.y ? 1 : -1) * (bh + 8);
-      }
-      y = Math.max(v.t + hh, Math.min(v.b - hh, y));
-      placed.push({ x, y, hw });
-      e.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
-      e.rotEl.setAttribute("transform", `rotate(${(ang * 180 / Math.PI).toFixed(1)} 12 12)`);
+      if (!want && it.on) { it.m.remove(); it.on = false; }
     });
+    if (z >= 15) { if (!map.hasLayer(foot)) foot.addTo(map); } else if (map.hasLayer(foot)) foot.remove();
+    app.classList.toggle("z-regional", z < 12.5);
+    app.classList.toggle("z-close", z >= 15);
+    if (routePill) { const show = z < 14; const el = routePill.getElement(); if (el) el.style.display = show ? "" : "none"; }
+    requestAnimationFrame(cull);
   }
 
-  function avoidRects() {
-    const out = [];
-    const add = (n, p) => { if (!n) return; const r = n.getBoundingClientRect(); out.push({ left: r.left - p, top: r.top - p, right: r.right + p, bottom: r.bottom + p }); };
-    add(hqEl.querySelector(".hq-group"), 10);
-    document.querySelectorAll(".pin-drop, .util-sq").forEach((n) => add(n, 8));
-    add($("ctrl"), 8);
-    add($("brand"), 8);
-    return out;
-  }
-
-  // Hide lower-priority labels that collide with anything more important.
   function cull() {
-    items.forEach((it) => { it.culled = false; });
-    place();
     const rects = [];
-    const hit = (r, own) => rects.some((q) => (!own || q.own !== own) && r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom);
+    const hit = (r) => rects.some((q) => r.left < q.right && q.left < r.right && r.top < q.bottom && q.top < r.bottom);
     const pad = (r, p) => ({ left: r.left - p, top: r.top - p, right: r.right + p, bottom: r.bottom + p });
-    const vis = items.filter((it) => !it.el.classList.contains("off"));
-    if (isDesk()) edges.forEach((e) => rects.push(pad(e.el.firstElementChild.getBoundingClientRect(), 4)));
-    else rects.push(pad(edgeRow.getBoundingClientRect(), 2), pad($("home").getBoundingClientRect(), 2));
-    rects.push(pad($("brand").getBoundingClientRect(), 4));
-    vis.filter((it) => it.fixed).forEach((it) => {
-      it.el.querySelectorAll(".hq-group, .pin-drop, .util-sq").forEach((n) => rects.push(Object.assign(pad(n.getBoundingClientRect(), 3), { own: it })));
+    [$("brand"), $("ctrl")].forEach((n) => n && rects.push(pad(n.getBoundingClientRect(), 4)));
+    if (!card.hidden) rects.push(pad(card.getBoundingClientRect(), 0));
+    const live = markers.filter((it) => it.on && it.m.getElement()).sort((a, b) => b.pri - a.pri);
+    live.forEach((it) => it.m.getElement().classList.remove("culled", "nolabel"));
+    live.forEach((it) => {
+      const el = it.m.getElement();
+      const core = el.querySelector(".hq-group, .anc-badge, .pin-drop, .util-sq, .lm-in");
+      if (!core) return;
+      const r = pad(core.getBoundingClientRect(), 2);
+      if (it.pri < 90 && hit(r)) { el.classList.add("culled"); return; }
+      rects.push(r);
     });
-    vis.filter((it) => it.pin).sort((a, b) => b.pri - a.pri).forEach((it) => {
-      const lbl = it.el.querySelector(".pin-lbl");
-      lbl.style.visibility = "";
+    live.forEach((it) => {
+      const el = it.m.getElement();
+      if (el.classList.contains("culled")) return;
+      const lbl = el.querySelector(".pin-lbl, .anc-lbl");
+      if (!lbl) return;
+      if (it.cls === "pin") {
+        const pt = map.latLngToContainerPoint(it.latlng);
+        el.classList.toggle("left", pt.x + 26 + lbl.offsetWidth > innerWidth - 12);
+      }
       const r = pad(lbl.getBoundingClientRect(), 2);
-      if (hit(r, it)) lbl.style.visibility = "hidden"; else rects.push(r);
+      if (hit(r)) el.classList.add("nolabel"); else rects.push(r);
     });
-    vis.filter((it) => !it.fixed).sort((a, b) => b.pri - a.pri).forEach((it) => {
-      const n = it.el.firstElementChild;
-      const r = pad(n.getBoundingClientRect(), 3);
-      if (hit(r)) { it.culled = true; it.el.classList.add("off"); } else rects.push(r);
-    });
+    if (routePill && routePill.getElement()) {
+      const pe = routePill.getElement(), r = pad(pe.firstElementChild.getBoundingClientRect(), 4);
+      pe.classList.toggle("culled", hit(r));
+    }
+  }
+  map.on("zoomend", refresh);
+  map.on("moveend", () => requestAnimationFrame(cull));
+
+  /* ---------- Views ---------- */
+  function homeView(animate) {
+    const pts = [HQLL, [byId["red-rocks"].lat, byId["red-rocks"].lng]];
+    if (isDesk()) {
+      ["certified-tattoo", "denver-improv", "whiskey-row"].forEach((id) => byId[id] && pts.push([byId[id].lat, byId[id].lng]));
+      map.fitBounds(pts, { paddingTopLeft: [90, 150], paddingBottomRight: [140, 90], animate: !!animate, maxZoom: 13 });
+    } else {
+      if (byId["certified-tattoo"]) pts.push([byId["certified-tattoo"].lat, byId["certified-tattoo"].lng]);
+      map.fitBounds(pts, { paddingTopLeft: [26, 150], paddingBottomRight: [60, 70], animate: !!animate, maxZoom: 13 });
+    }
+  }
+
+  // Center a point in whatever part of the map the card leaves free.
+  function focusOn(latlng, zoom) {
+    const z = zoom == null ? map.getZoom() : zoom;
+    const size = map.getSize();
+    let fx = size.x / 2, fy = size.y / 2;
+    if (!card.hidden) {
+      if (isDesk()) fx = (size.x - 440) / 2 + 10;
+      else fy = 74 + (size.y - card.getBoundingClientRect().height - 74) / 2;
+    }
+    const p = map.project(latlng, z).subtract([fx - size.x / 2, fy - size.y / 2]);
+    map.flyTo(map.unproject(p, z), z, { duration: 0.6 });
+  }
+
+  function fitWithCard(latlngs) {
+    const pad = isDesk() ? { paddingTopLeft: [70, 110], paddingBottomRight: [560, 60] }
+      : { paddingTopLeft: [30, 90], paddingBottomRight: [30, card.getBoundingClientRect().height + 30] };
+    map.flyToBounds(latlngs, Object.assign({ duration: 0.6, maxZoom: 13 }, pad));
   }
 
   /* ---------- Cards ---------- */
-  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
   const TBC = '<span class="tbc">TBC</span>';
   const val = (s) => (s === "TBC" ? '<span class="tbc solo">TBC</span>' : esc(s));
   const enc = encodeURIComponent;
-  const byId = {};
-  byId[hq.id] = Object.assign({ _t: "hq" }, hq);
-  D.hotel.forEach((p) => { byId[p.id] = Object.assign({ _t: "hotel" }, p); });
-  D.city.forEach((p) => { byId[p.id] = Object.assign({ _t: p.utility ? "util" : "city" }, p); });
-  D.edge.forEach((p) => { byId[p.id] = Object.assign({ _t: "edge" }, p); });
-
   function maps(p, kind) {
+    if (p.appleMapsUrl || p.googleMapsUrl) return { apple: p.appleMapsUrl, google: p.googleMapsUrl };
     const addr = p.address;
     if (!addr) return null;
     if (kind === "apple-directions") return { apple: "https://maps.apple.com/?daddr=" + enc(addr), google: "https://www.google.com/maps/dir/?api=1&destination=" + enc(addr) };
     const q = p.mapsQuery || p.name;
     return { apple: "https://maps.apple.com/?q=" + enc(q) + "&address=" + enc(addr), google: "https://www.google.com/maps/search/?api=1&query=" + enc(q + ", " + addr) };
   }
-
   function ctaHtml(p) {
     const c = p.cta || {};
     if (c.kind === "apple-place" || c.kind === "apple-directions") {
       const u = maps(p, c.kind);
-      if (!u) return "";
-      return `<a class="c-cta" href="${u.apple}" target="_blank" rel="noopener">${icon(c.kind === "apple-directions" ? "route" : "pin")}${esc(c.label)}</a>
-        <div class="c-alt"><a href="${u.google}" target="_blank" rel="noopener">or open in Google Maps</a></div>`;
+      if (!u || !u.apple) return "";
+      return `<a class="c-cta" href="${u.apple}" target="_blank" rel="noopener">${icon(c.kind === "apple-directions" ? "route" : "pin")}${esc(c.label)}</a>` +
+        (u.google ? `<div class="c-alt"><a href="${u.google}" target="_blank" rel="noopener">or open in Google Maps</a></div>` : "");
     }
     if (c.kind === "help") return `<a class="c-cta help" href="${esc(CFG.helpDeskUrl)}">${icon("chat")}${esc(c.label)}</a>`;
     if (c.kind === "itinerary") return `<a class="c-cta" href="${esc(CFG.itineraryUrl)}">${icon("list")}${esc(c.label)}</a>`;
@@ -344,7 +266,6 @@
     }
     return "";
   }
-
   function whenHtml(p) {
     const hours = p.hoursFrom && byId[p.hoursFrom] ? byId[p.hoursFrom].hours : p.hours;
     if (!hours || !hours.length) return "";
@@ -356,10 +277,10 @@
   const tbcTail = (s) => esc(String(s).replace(/ TBC$/, "")) + (/ TBC$/.test(s) ? TBC : "");
 
   function renderPlace(p) {
-    const kind = p._t === "edge" ? ["edge", "Off the map, about " + p.distance] : p._t === "util" ? ["util", p.kind] : ["", p.kind];
+    const dot = p._t === "anchor" ? "anchor" : p._t === "utility" ? "util" : "";
     const where = p.address ? esc(p.address) : (p.where ? tbcTail(p.where) : '<span class="tbc solo">Address TBC</span>');
     cardBody.innerHTML = `
-      <div class="c-kind"><i class="${kind[0]}"></i>${esc(kind[1])}</div>
+      <div class="c-kind"><i class="${dot}"></i>${esc(p.kind || "")}</div>
       <h2 class="c-name">${esc(p.name)}</h2>
       ${p.subtitle ? `<p class="c-sub">${esc(p.subtitle)}</p>` : ""}
       <p class="c-where">${where}</p>
@@ -368,35 +289,33 @@
       ${accessHtml(p)}
       ${ctaHtml(p)}`;
   }
-
   function renderHQ() {
-    const lobby = D.hotel.filter((h) => h.spots.some((s) => s.level === "lobby") && !h.help);
-    const up = D.hotel.filter((h) => h.spots.every((s) => s.level === "level2"));
     const help = D.hotel.find((h) => h.help);
+    const lobby = D.hotel.filter((h) => !h.help && h.spots.some((s) => s.level === "lobby"));
+    const up = D.hotel.filter((h) => h.spots.every((s) => s.level === "level2"));
     const row = (h, cls) => `<li class="${cls || ""}"><button type="button" data-sel="${h.id}">
         <span class="dot${h.help ? " help" : ""}">${icon(h.icon)}</span>
         <span><b>${esc(h.name)}</b><small>${esc(h.row || h.level)}</small></span>
         <svg class="chev" viewBox="0 0 24 24">${I.chev}</svg></button></li>`;
     cardBody.innerHTML = `
-      <div class="c-kind"><i></i>${esc(hq.tag)}</div>
-      <h2 class="c-name">${esc(hq.name)}</h2>
-      <p class="c-where">${esc(hq.address)}</p>
-      <p class="c-desc">${esc(hq.description)}</p>
-      <div class="hd">${diagram(null, false)}</div>
+      <div class="c-kind"><i></i>${esc(HQ.tag)}</div>
+      <h2 class="c-name">${esc(HQ.name)}</h2>
+      <p class="c-where">${esc(HQ.address)}</p>
+      <p class="c-desc">${esc(HQ.description)}</p>
+      <div class="hd">${diagram(null)}</div>
       <ul class="hl">${help ? row(help, "help-row") : ""}</ul>
       <p class="hl-h">Lobby level</p><ul class="hl">${lobby.map((h) => row(h)).join("")}</ul>
       <p class="hl-h">Level 2</p><ul class="hl">${up.map((h) => row(h)).join("")}</ul>
-      ${ctaHtml(Object.assign({}, hq))}`;
+      ${ctaHtml(HQ)}`;
   }
-
   function renderHotelItem(p) {
     cardBody.innerHTML = `
-      <button class="c-back" type="button" data-sel="${hq.id}">${icon("back")}Sheraton</button>
+      <button class="c-back" type="button" data-sel="${HQ.id}">${icon("back")}Inside the Sheraton</button>
       <div class="c-kind"><i class="${p.help ? "help" : ""}"></i>${esc(p.level)}</div>
       <h2 class="c-name">${esc(p.name)}</h2>
       ${p.subtitle ? `<p class="c-sub">${esc(p.subtitle)}</p>` : ""}
       ${p.where ? `<p class="c-where">${tbcTail(p.where)}</p>` : ""}
-      <div class="hd compact">${diagram(p.id, true)}</div>
+      <div class="hd compact">${diagram(p.id)}</div>
       ${whenHtml(p)}
       <p class="c-desc">${esc(p.description)}</p>
       ${accessHtml(p)}
@@ -404,57 +323,58 @@
       ${p.help ? `<p class="c-foot">Name of the online help desk ${TBC}</p>` : ""}`;
   }
 
-  /* Illustrated hotel diagram: two stacked levels in a light isometric view */
-  function diagram(focus, compact) {
-    const s = compact ? 1.3 : 1.72, th = 7, dz = 55 * s + 18;
-    const iso = (u, v, lv) => [(u - v) * 0.866 * s, (u + v) * 0.5 * s - (lv === "level2" ? dz : 0)];
-    const pt = (a) => a.map((n) => n.toFixed(1)).join(" ");
-    const plates = { lobby: [0, 0, 100, 40], level2: [0, 0, 70, 40] };
-    let out = "", labels = "";
-    function plate(lv) {
+  /* Hotel guide: the two SR Weekend levels as stacked, labeled plates.
+     With a focus id, only the levels that place is on are drawn. */
+  function diagram(focus) {
+    const s = focus ? 1.62 : 1.9, th = 8, gap = focus ? 26 : 34;
+    const plates = { level2: [0, 0, 70, 40], lobby: [0, 0, 100, 40] };
+    const f = focus && byId[focus];
+    const levels = ["level2", "lobby"].filter((lv) => !f || f.spots.some((sp) => sp.level === lv));
+    const H = (lv) => (plates[lv][2] + plates[lv][3]) * 0.5 * s + th;
+    let y0 = 62, out = "", tops = {};
+    levels.forEach((lv) => { tops[lv] = y0; y0 += H(lv) + gap + 52; });
+    const iso = (u, v, lv) => [(u - v) * 0.866 * s, (u + v) * 0.5 * s + tops[lv]];
+    const P = (a) => a[0].toFixed(1) + " " + a[1].toFixed(1);
+    levels.forEach((lv) => {
       const [u0, v0, u1, v1] = plates[lv];
-      const A = iso(u0, v0, lv), Bp = iso(u1, v0, lv), Cp = iso(u1, v1, lv), Dp = iso(u0, v1, lv);
-      out += `<path class="side" d="M${pt(Bp)} L${pt(Cp)} L${Cp[0]} ${Cp[1] + th} L${Bp[0]} ${Bp[1] + th}Z"/>`;
-      out += `<path class="side2" d="M${pt(Dp)} L${pt(Cp)} L${Cp[0]} ${Cp[1] + th} L${Dp[0]} ${Dp[1] + th}Z"/>`;
-      out += `<path class="plate" d="M${pt(A)} L${pt(Bp)} L${pt(Cp)} L${pt(Dp)}Z"/>`;
+      const A = iso(u0, v0, lv), B = iso(u1, v0, lv), C = iso(u1, v1, lv), Dd = iso(u0, v1, lv);
+      out += `<text class="lvl" x="${(Dd[0]).toFixed(1)}" y="${(A[1] - 40).toFixed(1)}">${lv === "lobby" ? "Lobby level" : "Level 2, event level"}</text>`;
+      out += `<path class="side" d="M${P(B)} L${P(C)} L${C[0]} ${C[1] + th} L${B[0]} ${B[1] + th}Z"/>`;
+      out += `<path class="side2" d="M${P(Dd)} L${P(C)} L${C[0]} ${C[1] + th} L${Dd[0]} ${Dd[1] + th}Z"/>`;
+      out += `<path class="plate" d="M${P(A)} L${P(B)} L${P(C)} L${P(Dd)}Z"/>`;
       D.rooms.filter((r) => r.level === lv).forEach((r) => {
         const a = iso(r.u0, r.v0, lv), b = iso(r.u1, r.v0, lv), c = iso(r.u1, r.v1, lv), d = iso(r.u0, r.v1, lv);
-        out += `<path class="room" d="M${pt(a)} L${pt(b)} L${pt(c)} L${pt(d)}Z"/>`;
-        if (!compact) {
-          const m = iso(r.u0 + 2, r.v1 - 2, lv);
-          labels += `<text class="room-n" x="${(m[0] + 4).toFixed(1)}" y="${(m[1] + 3).toFixed(1)}">${esc(r.name)}</text>`;
-        }
+        out += `<path class="room" d="M${P(a)} L${P(b)} L${P(c)} L${P(d)}Z"/>`;
       });
       if (lv === "lobby") {
-        const a = iso(88, 5, lv), b = iso(94, 5, lv), c = iso(94, 30, lv), d = iso(88, 30, lv);
-        out += `<path class="desk" d="M${pt(a)} L${pt(b)} L${pt(c)} L${pt(d)}Z"/>`;
+        const a = iso(90, 6, lv), b = iso(95, 6, lv), c = iso(95, 30, lv), d = iso(90, 30, lv);
+        out += `<path class="desk" d="M${P(a)} L${P(b)} L${P(c)} L${P(d)}Z"/>`;
+        const e = iso(100, 40, lv);
+        out += `<text class="hint" x="${(e[0] - 4).toFixed(1)}" y="${(e[1] + th + 16).toFixed(1)}" text-anchor="end">Front desk on the right</text>`;
       }
-      const lab = iso(u0, v1, lv);
-      out += `<text class="lvl" x="${(lab[0] - 10).toFixed(1)}" y="${(lab[1] + 4).toFixed(1)}" text-anchor="end">${lv === "lobby" ? "Lobby" : "Level 2"}</text>`;
+    });
+    if (levels.length === 2) {
+      const a = iso(68, 20, "level2"), b = iso(68, 20, "lobby");
+      out += `<path class="esc" d="M${P([a[0], a[1] + th])} L${P(b)}"/>`;
+      out += `<text class="hint" x="${(a[0] + 8).toFixed(1)}" y="${((a[1] + b[1]) / 2 + 14).toFixed(1)}">Escalators</text>`;
     }
-    function pins(lv) {
-      D.hotel.forEach((h) => h.spots.forEach((sp) => {
-        if (sp.level !== lv) return;
-        const [x, y] = iso(sp.u, sp.v, lv);
-        const r = h.help ? 12 : 10.5, st = compact ? 11 : 14;
-        const cls = "hp" + (h.help ? " help" : "") + (focus ? (focus === h.id ? " on" : " dim") : "");
-        out += `<g class="${cls}" data-sel="${h.id}" role="button" aria-label="${esc(h.name)}">
-          <ellipse class="shadow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5" ry="2.5"/>
-          <path class="stem" d="M${x.toFixed(1)} ${y.toFixed(1)} V${(y - st).toFixed(1)}"/>
-          <circle class="head" cx="${x.toFixed(1)}" cy="${(y - st - r + 2).toFixed(1)}" r="${r}"/>
-          <g class="ic" transform="translate(${(x - r * 0.62).toFixed(1)} ${(y - st - r + 2 - r * 0.62).toFixed(1)}) scale(${(r * 1.24 / 24).toFixed(3)})">${I[h.icon]}</g>
-          <circle cx="${x.toFixed(1)}" cy="${(y - st - r).toFixed(1)}" r="20" fill="transparent"/>
-        </g>`;
-      }));
-    }
-    plate("lobby"); pins("lobby");
-    const e1 = iso(56, 16, "lobby"), e2 = iso(56, 16, "level2");
-    out += `<path class="esc" d="M${pt(e1)} L${pt(e2)}"/>`;
-    plate("level2"); pins("level2");
-    out += labels;
-    const vbx = -40 * 0.866 * s - 66, vbw = 140 * 0.866 * s + 72;
-    const top = -dz - 34, bottom = 70 * s + th + 6;
-    return `<svg viewBox="${vbx} ${top.toFixed(0)} ${vbw} ${(bottom - top).toFixed(0)}" role="img" aria-label="Sheraton levels">${out}</svg>`;
+    levels.forEach((lv) => D.hotel.forEach((h) => h.spots.forEach((sp) => {
+      if (sp.level !== lv) return;
+      const [x, y] = iso(sp.u, sp.v, lv);
+      const r = h.help ? 13 : 11.5, st = 13, cy = y - st - r + 2;
+      const on = focus === h.id, dim = focus && !on;
+      const cls = "hp" + (h.help ? " help" : "") + (on ? " on" : "") + (dim ? " dim" : "");
+      out += `<g class="${cls}" data-sel="${h.id}" role="button" aria-label="${esc(h.name)}">
+        <ellipse class="shadow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5.5" ry="2.6"/>
+        <path class="stem" d="M${x.toFixed(1)} ${y.toFixed(1)} V${(y - st).toFixed(1)}"/>
+        <circle class="head" cx="${x.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r}"/>
+        <g class="ic" transform="translate(${(x - r * 0.62).toFixed(1)} ${(cy - r * 0.62).toFixed(1)}) scale(${(r * 1.24 / 24).toFixed(3)})">${I[h.icon]}</g>
+        ${dim ? "" : `<text class="hp-lbl" x="${(x + r + 5).toFixed(1)}" y="${(cy + 4.5).toFixed(1)}">${esc(h.short || h.name)}</text>`}
+        <circle cx="${x.toFixed(1)}" cy="${cy.toFixed(1)}" r="22" fill="transparent"/>
+      </g>`;
+    })));
+    const minX = -40 * 0.866 * s - 8, maxX = 100 * 0.866 * s + 70;
+    return `<svg viewBox="${minX.toFixed(0)} 0 ${(maxX - minX).toFixed(0)} ${(y0 - gap - 30).toFixed(0)}" role="img" aria-label="Sheraton levels">${out}</svg>`;
   }
 
   cardBody.addEventListener("click", (e) => {
@@ -463,33 +383,37 @@
   });
 
   /* ---------- Selection ---------- */
-  let sel = null;
-  function select(id) {
+  function select(id, opts) {
     const p = byId[id];
     if (!p) return;
     sel = id;
-    if (p._t === "hq") renderHQ();
-    else if (p._t === "hotel") renderHotelItem(p);
-    else renderPlace(p);
+    if (p._t === "hq") renderHQ(); else if (p._t === "hotel") renderHotelItem(p); else renderPlace(p);
     app.classList.add("has-sel");
     const inHotel = p._t === "hq" || p._t === "hotel";
-    hqEl.classList.toggle("is-on", inHotel && !p.help);
-    hqEl.classList.toggle("help-on", !!p.help);
-    document.querySelectorAll(".pin, .util, .edge").forEach((m) => m.classList.toggle("is-on", m.dataset.id === id));
+    const hqEl = hqIt.m.getElement();
+    if (hqEl) { hqEl.classList.toggle("is-on", inHotel && !p.help); hqEl.classList.toggle("help-on", !!p.help); }
+    markers.forEach((it) => { const el = it.m.getElement(); if (el && it.id !== HQ.id) el.classList.toggle("is-on", it.id === id); });
+    app.classList.toggle("route-on", id === "red-rocks" || id === "shuttle");
     card.hidden = false;
     cardScroll.scrollTop = 0;
     setParam(id);
-    requestAnimationFrame(() => { reveal(p); placeEdges(); });
+    const instant = opts && opts.instant;
+    requestAnimationFrame(() => {
+      if (inHotel) focusOn(HQLL, Math.max(map.getZoom(), CFG.zoom.hotel));
+      else if (id === "red-rocks" && R) fitWithCard(routeLine.getLatLngs());
+      else focusOn([p.lat, p.lng], Math.max(map.getZoom(), p.type === "utility" ? 16 : CFG.zoom.place - (p.minZoom ? 0 : 1)));
+      if (instant) map.stop();
+    });
   }
   function clearSel() {
     if (!sel) return;
     sel = null;
-    app.classList.remove("has-sel");
-    document.querySelectorAll(".is-on, .help-on").forEach((m) => m.classList.remove("is-on", "help-on"));
+    app.classList.remove("has-sel", "route-on");
+    markers.forEach((it) => { const el = it.m.getElement(); if (el) el.classList.remove("is-on", "help-on"); });
     card.hidden = true;
     card.style.transform = "";
     setParam(null);
-    placeEdges();
+    requestAnimationFrame(cull);
   }
   function setParam(id) {
     const q = new URLSearchParams(location.search);
@@ -498,28 +422,12 @@
     history.replaceState(null, "", location.pathname + (s ? "?" + s : ""));
   }
 
-  // Keep the chosen place in view, clear of the card.
-  function reveal(p) {
-    let wx, wy;
-    if (p._t === "hq" || p._t === "hotel") { wx = HX; wy = M.hotel_center[1] + 40; }
-    else if (p._t === "edge") return;
-    else [wx, wy] = proj(p.lat, p.lng);
-    const v = viewRect();
-    const [sx, sy] = T.apply([wx, wy]);
-    const tx = isDesk() ? (v.l + v.r) / 2 : innerWidth / 2;
-    const ty = isDesk() ? (v.t + v.b) / 2 : v.t + (v.b - v.t) * 0.5;
-    const m = 70;
-    if (sx < v.l + m || sx > v.r - m || sy < v.t + m || sy > v.b - m || !isDesk() || p._t === "hq" || p._t === "hotel") {
-      svg.transition().duration(420).call(zoom.translateBy, (tx - sx) / T.k, (ty - sy) / T.k);
-    }
-  }
-
+  map.on("click", clearSel);
   $("close").addEventListener("click", clearSel);
-  svgEl.addEventListener("click", clearSel);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") clearSel(); });
-  $("zin").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1.5));
-  $("zout").addEventListener("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.5));
-  $("home").addEventListener("click", () => svg.transition().duration(450).call(zoom.transform, homeTransform()));
+  $("zin").addEventListener("click", () => map.zoomIn(1));
+  $("zout").addEventListener("click", () => map.zoomOut(1));
+  $("home").addEventListener("click", () => { clearSel(); homeView(true); });
 
   // Swipe the sheet down to close it.
   (function () {
@@ -527,7 +435,7 @@
     const start = (e) => {
       if (isDesk()) return;
       if (cardScroll.scrollTop > 0 && !e.target.closest(".grab")) return;
-      if (e.target.closest("a, button:not(.grab)")) return;
+      if (e.target.closest("a, button:not(.grab), .hp")) return;
       y0 = (e.touches ? e.touches[0] : e).clientY; dy = 0; card.classList.add("dragging");
     };
     const move = (e) => { if (y0 === null) return; dy = Math.max(0, (e.touches ? e.touches[0] : e).clientY - y0); card.style.transform = `translateY(${dy}px)`; };
@@ -542,11 +450,13 @@
 
   /* ---------- Boot ---------- */
   function boot() {
-    svg.call(zoom.transform, homeTransform());
-    cull();
+    const v = params.get("view");
+    if (v === "downtown") map.setView([39.7455, -104.9935], CFG.zoom.downtown);
+    else homeView(false);
+    refresh();
     const start = params.get("loc");
     if (start && byId[start]) select(start);
   }
-  addEventListener("resize", () => { place(); cull(); });
+  addEventListener("resize", () => requestAnimationFrame(cull));
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(boot);
 })();

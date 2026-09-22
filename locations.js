@@ -1,23 +1,26 @@
 /*
-  SR Weekend map. All places, copy and settings live in this file.
-  Edit here. You should never need to touch app.js or styles.css to
-  add, remove or move a place.
+  SR Weekend map. Every place, all copy and all settings live in this file.
+  Edit here. You should never need to touch app.js or styles.css to add,
+  remove or move a place.
 
-  POSITIONS
-  City places use real latitude and longitude (lat, lng).
-  Off-map places also use real lat / lng. The map works out which edge
-  of the screen to pin them to, so they always point the right way.
-  Places inside the Sheraton use `spot`, a position on the illustrated
-  hotel diagram: level "lobby" or "level2", u from 0 (back) to 100
-  (front right), v from 0 (back) to 40 (front left).
+  PLACES
+  Every place outside the hotel has:
+    id, show (true or false), type ("anchor", "city" or "utility"),
+    name, short (one line under the name on the map), icon,
+    lat and lng (where the marker sits), address (what the card shows),
+    hours, description, access, cta.
+  Optional: appleMapsUrl and googleMapsUrl override the links the map builds
+  from the address. minZoom hides a marker until the map is zoomed in that far.
 
-  ADDRESSES
-  `address` is what the card shows and what Apple Maps receives.
-  It is separate from the drawing position. null shows "Address TBC".
+  INSIDE THE SHERATON
+  Hotel places use `spots`, a position on the hotel diagram:
+  level "lobby" or "level2", u from 0 (back) to 100 (front right),
+  v from 0 (back) to 40 (front left). `short` is the label on the diagram.
 
   TBC
   Any text set to exactly "TBC" renders as a TBC chip.
   Hours rows can carry tbc: true to add a chip after the time.
+  An address of null shows "Address TBC".
 */
 
 window.SR_MAP = {
@@ -26,7 +29,37 @@ window.SR_MAP = {
     dates: "Nov 13 to 15, 2026",
     city: "Denver",
     helpDeskUrl: "#steve-help-desk",   // placeholder until the online help desk exists
-    itineraryUrl: "#itinerary"          // placeholder until the itinerary section exists
+    itineraryUrl: "#itinerary",         // placeholder until the itinerary section exists
+
+    // Basemap. CARTO Voyager raster tiles, no key needed. The warm SR tint is
+    // applied in styles.css (--tile-filter). Swap URLs to change the look.
+    basemap: {
+      base: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
+      labels: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+    },
+
+    // Zoom levels for the one continuous map
+    zoom: { hotel: 16.5, downtown: 14.5, place: 15 }
+  },
+
+  /* ---------------- THE DRIVE TO RED ROCKS ----------------
+     A hand-traced path along the real roads (Speer, 6th Ave, I-70, CO 26).
+     When snapToRoads is true the page asks the public OSRM router for the
+     exact road geometry and swaps it in. If that fails, this path stays. */
+  route: {
+    show: true,
+    from: "sheraton",
+    to: "red-rocks",
+    label: "About 30 min to Red Rocks",
+    snapToRoads: true,
+    path: [
+      [39.7421, -104.9899], [39.7395, -104.9938], [39.7380, -104.9985], [39.7356, -105.0100],
+      [39.7350, -105.0250], [39.7340, -105.0400], [39.7330, -105.0520], [39.7290, -105.0680],
+      [39.7250, -105.0810], [39.7200, -105.1000], [39.7180, -105.1100], [39.7190, -105.1400],
+      [39.7220, -105.1650], [39.7100, -105.1860], [39.6900, -105.1960], [39.6750, -105.2010],
+      [39.6654, -105.2057]
+    ]
   },
 
   /* ---------------- HOME BASE ---------------- */
@@ -35,7 +68,7 @@ window.SR_MAP = {
     name: "Sheraton Denver Downtown",
     tag: "SR Weekend HQ",
     address: "1550 Court Pl, Denver, CO 80202",
-    lat: 39.742043, lng: -104.989296,
+    lat: 39.742375, lng: -104.98973,
     description: "Home base for the weekend. The store, the listening party and the help desk are all here.",
     cta: { label: "Get directions", kind: "apple-directions" }
   },
@@ -57,7 +90,8 @@ window.SR_MAP = {
       ],
       description: "Questions? Find the team in orange shirts and hats. A Super Steve will be here throughout the weekend to help.",
       cta: { label: "Message a Super Steve", kind: "help" },
-      spots: [{ level: "lobby", u: 80, v: 14 }]
+      short: "Help desk",
+      spots: [{ level: "lobby", u: 86, v: 12 }]
     },
     {
       id: "parlur",
@@ -74,7 +108,8 @@ window.SR_MAP = {
       description: "The SR Weekend store. The full assortment, plus coffee and a content station inside.",
       access: "Room key only, first window Friday",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      spots: [{ level: "lobby", u: 12, v: 8 }]
+      short: "Parlur",
+      spots: [{ level: "lobby", u: 8, v: 4 }]
     },
     {
       id: "cafe",
@@ -86,7 +121,8 @@ window.SR_MAP = {
       hoursFrom: "parlur",
       description: "Coffee inside the Parlur.",
       cta: { label: "Open the Parlur", kind: "goto", target: "parlur" },
-      spots: [{ level: "lobby", u: 30, v: 6 }]
+      short: "Café",
+      spots: [{ level: "lobby", u: 46, v: 0 }]
     },
     {
       id: "living-album",
@@ -102,7 +138,8 @@ window.SR_MAP = {
       ],
       description: "Step in, put on headphones and explore mike.'s album The In-Betweens through the Living Album.",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      spots: [{ level: "level2", u: 58, v: 16, tag: "Fri" }, { level: "lobby", u: 22, v: 22, tag: "Sat, Sun" }]
+      short: "Living Album",
+      spots: [{ level: "level2", u: 40, v: 30, tag: "Fri" }, { level: "lobby", u: 6, v: 30, tag: "Sat, Sun" }]
     },
     {
       id: "content-stations",
@@ -114,7 +151,8 @@ window.SR_MAP = {
       hours: [{ day: "", time: "Times", tbc: true }],
       description: "Grab a photo.",
       cta: { label: "Open the Parlur", kind: "goto", target: "parlur" },
-      spots: [{ level: "lobby", u: 38, v: 20 }, { level: "lobby", u: 62, v: 28 }]
+      short: "Photos",
+      spots: [{ level: "lobby", u: 26, v: 30 }, { level: "lobby", u: 60, v: 36 }]
     },
     {
       id: "mezzanine",
@@ -129,7 +167,8 @@ window.SR_MAP = {
       access: "Hotel key may be required",
       accessTbc: true,
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      spots: [{ level: "level2", u: 46, v: 6 }]
+      short: "Mezzanine",
+      spots: [{ level: "level2", u: 48, v: 2 }]
     },
     {
       id: "stevenson-mingle",
@@ -141,7 +180,8 @@ window.SR_MAP = {
       hours: [{ day: "Fri", time: "Evening", tbc: true }],
       description: "A Friday night mingle for Steves on the mezzanine.",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      spots: [{ level: "level2", u: 62, v: 30, tag: "Fri" }]
+      short: "Mingle",
+      spots: [{ level: "level2", u: 58, v: 34, tag: "Fri" }]
     },
     {
       id: "grand-ballroom",
@@ -159,28 +199,47 @@ window.SR_MAP = {
       description: "mike.'s first and last ever album listening party, followed by the after party.",
       access: "Ticketed",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
-      spots: [{ level: "level2", u: 16, v: 12 }]
+      short: "Ballroom",
+      spots: [{ level: "level2", u: 10, v: 8 }]
     }
   ],
 
   /* Rooms drawn on the hotel diagram. Purely visual. */
   rooms: [
-    { level: "lobby",  name: "Parlur",         u0: 4,  v0: 3, u1: 44, v1: 37 },
+    { level: "lobby",  name: "Parlur",         u0: 4,  v0: 3, u1: 48, v1: 37 },
     { level: "level2", name: "Grand Ballroom", u0: 4,  v0: 3, u1: 30, v1: 37 },
     { level: "level2", name: "Mezzanine",      u0: 34, v0: 3, u1: 66, v1: 37 }
   ],
 
-  /* ---------------- AROUND DOWNTOWN ---------------- */
-  city: [
+  /* ---------------- AROUND DENVER ---------------- */
+  places: [
+    {
+      id: "red-rocks",
+      show: true,
+      type: "anchor",
+      name: "Red Rocks Amphitheatre",
+      short: "Sat and Sun, sold out",
+      kind: "Show nights",
+      address: "18300 W Alameda Pkwy, Morrison, CO 80465",
+      mapsQuery: "Red Rocks Amphitheatre",
+      lat: 39.6654, lng: -105.2057,
+      hours: [{ day: "Sat", time: "Doors 6pm" }, { day: "Sun", time: "Doors 2pm" }],
+      description: "Both nights are sold out. Plan your ride, it's about 30 minutes west of the Sheraton.",
+      access: "Sold out",
+      cta: { label: "Directions in Apple Maps", kind: "apple-directions" }
+    },
     {
       id: "whiskey-row",
+      show: true,
+      type: "city",
       name: "Whiskey Row",
       short: "Bar crawl start",
       icon: "glass",
-      kind: "Around downtown",
+      kind: "Downtown",
       address: "1946 Market St, Denver, CO 80202",
       mapsQuery: "Dierks Bentley's Whiskey Row Denver",
       lat: 39.753564, lng: -104.993754,
+      minZoom: 12.5,
       hours: [{ day: "Sun", time: "9:30am" }],
       description: "The Sunday morning bar crawl starts here, then heads to Tom's Watch Bar.",
       access: "Ticketed separately",
@@ -188,56 +247,29 @@ window.SR_MAP = {
     },
     {
       id: "flyhi",
-      name: "Flyhi",
+      show: true,
+      type: "city",
+      name: "Flyhi Cannabis",
       short: "Partner stop",
       icon: "star",
-      kind: "Around downtown",
+      kind: "Downtown",
       address: "401 16th St Mall, Denver, CO 80202",
       mapsQuery: "Flyhi Cannabis Dispensary",
       lat: 39.743496, lng: -104.989616,
+      minZoom: 14,
       hours: [{ day: "", time: "Hours", tbc: true }],
       description: "SR Weekend partner stop on the 16th Street Mall, a block from the Sheraton. Offer TBC.",
       access: "21+ with valid ID",
       cta: { label: "Open in Apple Maps", kind: "apple-place" }
     },
     {
-      id: "shuttle",
-      utility: true,
-      name: "Shuttle pickup",
-      short: "Rides to Red Rocks",
-      icon: "bus",
-      kind: "Next to the Sheraton",
-      address: null,
-      where: "Outside the Sheraton, exact spot TBC",
-      lat: 39.741639, lng: -104.990352,
-      hours: [{ day: "Sat", time: "TBC" }, { day: "Sun", time: "TBC" }],
-      description: "Rides to Red Rocks leave from here.",
-      cta: { label: "Ask a Super Steve", kind: "goto", target: "help-desk" }
-    }
-  ],
-
-  /* ---------------- OFF THE MAP ---------------- */
-  edge: [
-    {
-      id: "red-rocks",
-      name: "Red Rocks Amphitheatre",
-      label: "Red Rocks",
-      distance: "30 min west",
-      icon: "rocks",
-      address: "18300 W Alameda Pkwy, Morrison, CO 80465",
-      mapsQuery: "Red Rocks Amphitheatre",
-      lat: 39.6654, lng: -105.2057,
-      hours: [{ day: "Sat", time: "Doors 6pm" }, { day: "Sun", time: "Doors 2pm" }],
-      description: "Both nights are sold out. Plan your ride, it's about 30 minutes west.",
-      access: "Sold out",
-      cta: { label: "Directions in Apple Maps", kind: "apple-directions" }
-    },
-    {
       id: "certified-tattoo",
+      show: true,
+      type: "city",
       name: "Certified Tattoo",
-      subtitle: "East Colfax studio",
-      label: "Certified Tattoo",
-      distance: "10 min east",
+      short: "mike. flash collection",
+      icon: "pen",
+      kind: "East Colfax",
       address: "3216 E Colfax Ave, Denver, CO 80206",
       mapsQuery: "Certified Tattoo Studios East Colfax",
       lat: 39.7403, lng: -104.9496,
@@ -247,21 +279,40 @@ window.SR_MAP = {
     },
     {
       id: "denver-improv",
+      show: true,
+      type: "city",
       name: "Denver Improv",
-      label: "Denver Improv",
-      distance: "20 min northeast",
+      short: "Sunday comedy",
+      icon: "mic",
+      kind: "Northfield",
       address: "8246 Northfield Blvd, Denver, CO 80238",
       mapsQuery: "Denver Improv",
       lat: 39.7837, lng: -104.8918,
       hours: [{ day: "Sun", time: "8:30pm" }],
       description: "Comedy night to close out the weekend.",
       cta: { label: "Open in Apple Maps", kind: "apple-place" }
+    },
+    {
+      id: "shuttle",
+      show: true,
+      type: "utility",
+      name: "Shuttle pickup",
+      short: "Rides to Red Rocks",
+      icon: "bus",
+      kind: "Next to the Sheraton",
+      address: null,
+      where: "Outside the Sheraton, exact spot TBC",
+      lat: 39.741639, lng: -104.990352,
+      minZoom: 15,
+      hours: [{ day: "Sat", time: "TBC" }, { day: "Sun", time: "TBC" }],
+      description: "Rides to Red Rocks leave from here.",
+      cta: { label: "Ask a Super Steve", kind: "goto", target: "help-desk" }
     }
   ],
 
   /* Drawn landmarks for orientation. Not tappable. */
   landmarks: [
-    { id: "union-station", name: "Union Station", art: "union-station", lat: 39.75314, lng: -105.00013 },
-    { id: "capitol", name: "State Capitol", art: "capitol", lat: 39.73927, lng: -104.98484 }
+    { id: "union-station", name: "Union Station", art: "union-station", lat: 39.7532, lng: -105.0001, minZoom: 14 },
+    { id: "capitol", name: "State Capitol", art: "capitol", lat: 39.73927, lng: -104.98484, minZoom: 14 }
   ]
 };
