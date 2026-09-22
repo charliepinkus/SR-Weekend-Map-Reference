@@ -23,6 +23,10 @@ Add `&clean=1` to hide the Design reference tag.
 - Flyhi: `/?loc=flyhi`
 - Certified Tattoo: `/?loc=certified-tattoo`
 
+## Art direction
+
+The basemap sits under an aged-paper wash (`--ground-wash` in `styles.css`) so land reads warm and deep while streets and labels stay dark. Landmark labels use small designed chips. The Sheraton card opens as a wide hotel inset over the map on desktop, with the illustrated two-level guide beside the list of spots. Primary hotel spots (help desk, Parlur, Mezzanine, Grand Ballroom) get full pins; the café, Living Album and content stations are secondary. Stevenson Mingle lives on the Mezzanine card as its 6 to 8pm event.
+
 ## Basemap, ink style
 
 The map inverts CARTO's dark tile set so streets draw as dark ink on cream, closer to a hand-authored map, with a separate light label layer on top. Rivers through town are drawn from bundled OpenStreetMap data. The style is set by `basemap.style` in `locations.js`. Set it to `"voyager"` for the plain colored map. The tint is `--ink-filter` in `styles.css`.

@@ -250,7 +250,7 @@
       if (!core) return;
       const r = pad(core.getBoundingClientRect(), 2);
       if (it.pri < 90 && hit(r)) { el.classList.add("culled"); return; }
-      rects.push(r);
+      if (!it.cls.includes("lm-hills")) rects.push(r);
     });
     live.forEach((it) => {
       const el = it.m.getElement();
@@ -298,7 +298,7 @@
     const size = map.getSize();
     let fx = size.x / 2, fy = size.y / 2;
     if (!card.hidden) {
-      if (isDesk()) fx = (size.x - 440) / 2 + 10;
+      if (isDesk()) fx = card.classList.contains("card--inset") ? size.x * 0.76 : (size.x - 440) / 2 + 10;
       else fy = 74 + (size.y - card.getBoundingClientRect().height - 74) / 2;
     }
     const p = map.project(latlng, z).subtract([fx - size.x / 2, fy - size.y / 2]);
@@ -368,22 +368,30 @@
   }
   function renderHQ() {
     const help = D.hotel.find((h) => h.help);
-    const lobby = D.hotel.filter((h) => !h.help && h.spots.some((s) => s.level === "lobby"));
-    const up = D.hotel.filter((h) => h.spots.every((s) => s.level === "level2"));
+    const lobby = D.hotel.filter((h) => !h.help && !h.minor && h.spots.some((s) => s.level === "lobby"));
+    const up = D.hotel.filter((h) => !h.minor && h.spots.every((s) => s.level === "level2"));
+    const minor = D.hotel.filter((h) => h.minor);
     const row = (h, cls) => `<li class="${cls || ""}"><button type="button" data-sel="${h.id}">
         <span class="dot${h.help ? " help" : ""}">${icon(h.icon)}</span>
         <span><b>${esc(h.name)}</b><small>${esc(h.row || h.level)}</small></span>
         <svg class="chev" viewBox="0 0 24 24">${I.chev}</svg></button></li>`;
     cardBody.innerHTML = `
-      <div class="c-kind"><i></i>${esc(HQ.tag)}</div>
-      <h2 class="c-name">${esc(HQ.name)}</h2>
-      <p class="c-where">${esc(HQ.address)}</p>
-      <p class="c-desc">${esc(HQ.description)}</p>
-      <div class="hd">${diagram(null)}</div>
-      <ul class="hl">${help ? row(help, "help-row") : ""}</ul>
-      <p class="hl-h">Lobby level</p><ul class="hl">${lobby.map((h) => row(h)).join("")}</ul>
-      <p class="hl-h">Level 2</p><ul class="hl">${up.map((h) => row(h)).join("")}</ul>
-      ${ctaHtml(HQ)}`;
+      <div class="inset">
+        <div class="inset-map">
+          <div class="c-kind"><i></i>${esc(HQ.tag)}</div>
+          <h2 class="c-name">${esc(HQ.name)}</h2>
+          <p class="c-where">${esc(HQ.address)}</p>
+          <div class="hd">${diagram(null)}</div>
+        </div>
+        <div class="inset-list">
+          <p class="c-desc">${esc(HQ.description)}</p>
+          <ul class="hl">${help ? row(help, "help-row") : ""}</ul>
+          <p class="hl-h">Lobby level</p><ul class="hl">${lobby.map((h) => row(h)).join("")}</ul>
+          <p class="hl-h">Level 2</p><ul class="hl">${up.map((h) => row(h)).join("")}</ul>
+          <p class="hl-h">Also inside</p><ul class="hl hl-minor">${minor.map((h) => row(h)).join("")}</ul>
+          ${ctaHtml(HQ)}
+        </div>
+      </div>`;
   }
   function renderHotelItem(p) {
     cardBody.innerHTML = `
@@ -443,9 +451,9 @@
     levels.forEach((lv) => D.hotel.forEach((h) => h.spots.forEach((sp) => {
       if (sp.level !== lv) return;
       const [x, y] = iso(sp.u, sp.v, lv);
-      const r = h.help ? 13 : 11.5, st = 13, cy = y - st - r + 2;
+      const r = h.help ? 13.5 : h.minor ? 9 : 12, st = h.minor ? 10 : 14, cy = y - st - r + 2;
       const on = focus === h.id, dim = focus && !on;
-      const cls = "hp" + (h.help ? " help" : "") + (on ? " on" : "") + (dim ? " dim" : "");
+      const cls = "hp" + (h.help ? " help" : "") + (h.minor ? " minor" : "") + (on ? " on" : "") + (dim ? " dim" : "");
       out += `<g class="${cls}" data-sel="${h.id}" role="button" aria-label="${esc(h.name)}">
         <ellipse class="shadow" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="5.5" ry="2.6"/>
         <path class="stem" d="M${x.toFixed(1)} ${y.toFixed(1)} V${(y - st).toFixed(1)}"/>
@@ -470,6 +478,7 @@
     if (!p) return;
     sel = id;
     if (p._t === "hq") renderHQ(); else if (p._t === "hotel") renderHotelItem(p); else renderPlace(p);
+    card.classList.toggle("card--inset", p._t === "hq");
     app.classList.add("has-sel");
     const inHotel = p._t === "hq" || p._t === "hotel";
     const hqEl = hqIt.m.getElement();

@@ -66,7 +66,7 @@ window.SR_MAP = {
       primary: true,
       from: "sheraton",
       to: "red-rocks",
-      label: "Sheraton to Red Rocks, about 30 min",
+      label: "Hotel → Red Rocks, about 30 min",
       snapToRoads: true,
       path: [
         [39.7421, -104.9899], [39.7395, -104.9938], [39.7380, -104.9985], [39.7356, -105.0100],
@@ -82,7 +82,7 @@ window.SR_MAP = {
       primary: false,
       from: "airport",
       to: "sheraton",
-      label: "Airport to Sheraton, about 40 min",
+      label: "DEN → Hotel, about 40 min",
       snapToRoads: true,
       path: [
         [39.8561, -104.6737], [39.849, -104.673], [39.834, -104.742], [39.800, -104.800], [39.784, -104.823],
@@ -118,7 +118,7 @@ window.SR_MAP = {
         { day: "Sat", time: "9am to 5pm" },
         { day: "Sun", time: "9am to 1pm" }
       ],
-      description: "Questions? Find the team in orange shirts and hats. A Super Steve will be here throughout the weekend to help.",
+      description: "Questions? Find the team in orange shirts and hats.",
       cta: { label: "Message a Super Steve", kind: "help" },
       short: "Help desk",
       spots: [{ level: "lobby", u: 86, v: 12 }]
@@ -131,18 +131,19 @@ window.SR_MAP = {
       where: "Street entrance plus a hotel entrance",
       level: "Lobby level",
       hours: [
-        { day: "Fri", time: "Afternoon", tbc: true, note: "Room key holders first, then the public" },
+        { day: "Fri", time: "4pm hotel guests, 5pm public", note: "Close TBC" },
         { day: "Sat", time: "8am to 6pm" },
         { day: "Sun", time: "8am to noon" }
       ],
-      description: "The SR Weekend store. The full assortment, plus coffee and a content station inside.",
-      access: "Room key only, first window Friday",
+      description: "SR Weekend store and retail hub. Hotel guests get first access at 4pm Friday, with public access from 5pm.",
+      access: "Room key for the 4pm window Friday",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
       short: "Parlur",
       spots: [{ level: "lobby", u: 8, v: 4 }]
     },
     {
       id: "cafe",
+      minor: true,
       row: "Coffee inside the Parlur",
       name: "Café",
       icon: "cup",
@@ -156,23 +157,25 @@ window.SR_MAP = {
     },
     {
       id: "living-album",
-      row: "Fri on Level 2, Sat and Sun in the Parlur",
+      minor: true,
+      row: "On the mezzanine during the Mingle, then in the Parlur",
       name: "Living Album",
       icon: "headphones",
-      where: "Friday on the mezzanine. Saturday and Sunday in the Parlur lounge",
+      where: "Friday on the mezzanine during the Stevenson Mingle. Saturday and Sunday in the Parlur lounge",
       level: "Level 2 on Friday, Lobby level after",
       hours: [
-        { day: "Fri", time: "From about 5pm", note: "Mezzanine, Level 2" },
+        { day: "Fri", time: "6 to 8pm", note: "Mezzanine, during the Stevenson Mingle" },
         { day: "Sat", time: "During Parlur hours", note: "Parlur lounge" },
         { day: "Sun", time: "During Parlur hours", note: "Parlur lounge" }
       ],
       description: "Step in, put on headphones and explore mike.'s album The In-Betweens through the Living Album.",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
       short: "Living Album",
-      spots: [{ level: "level2", u: 40, v: 30, tag: "Fri" }, { level: "lobby", u: 6, v: 30, tag: "Sat, Sun" }]
+      spots: [{ level: "level2", u: 58, v: 30, tag: "Fri" }, { level: "lobby", u: 6, v: 30, tag: "Sat, Sun" }]
     },
     {
       id: "content-stations",
+      minor: true,
       row: "In the Parlur and the main lobby",
       name: "Content stations",
       icon: "camera",
@@ -186,32 +189,20 @@ window.SR_MAP = {
     },
     {
       id: "mezzanine",
-      row: "Top of the escalators, Fri night",
+      row: "Stevenson Mingle 6 to 8pm, then ticket holders",
       name: "Mezzanine",
-      subtitle: "South Convention Lobby",
+      subtitle: "Stevenson Mingle, Friday 6 to 8pm",
       icon: "layers",
-      where: "Top of the escalators",
+      where: "South Convention Lobby, top of the escalators",
       level: "Level 2",
-      hours: [{ day: "Fri", time: "From about 5:30pm", note: "Bars open at 6pm" }],
-      description: "Merch, bars and the Living Album booth on Friday night.",
-      access: "Hotel key may be required",
-      accessTbc: true,
+      hours: [
+        { day: "6 to 8pm", time: "Open to everyone", note: "Stevenson Mingle with DJ, bar, light bites, shopping and the Living Album" },
+        { day: "8pm on", time: "Ticket holders only", note: "Merch stays open through the after party" }
+      ],
+      description: "Friday night on the mezzanine starts as the Stevenson Mingle, then turns over to listening party ticket holders at 8pm.",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
       short: "Mezzanine",
       spots: [{ level: "level2", u: 48, v: 2 }]
-    },
-    {
-      id: "stevenson-mingle",
-      row: "Fri evening on the mezzanine",
-      name: "Stevenson Mingle",
-      icon: "glass",
-      where: "On the mezzanine. Exact spot TBC",
-      level: "Level 2",
-      hours: [{ day: "Fri", time: "Evening", tbc: true }],
-      description: "A Friday night mingle for Steves on the mezzanine.",
-      cta: { label: "See it in the itinerary", kind: "itinerary" },
-      short: "Mingle",
-      spots: [{ level: "level2", u: 58, v: 34, tag: "Fri" }]
     },
     {
       id: "grand-ballroom",
@@ -222,11 +213,11 @@ window.SR_MAP = {
       where: "",
       level: "Level 2",
       hours: [
-        { day: "Fri", time: "Doors 8pm" },
-        { day: "", time: "9pm to 11pm", note: "Program and live Q&A with mike." },
-        { day: "", time: "Until 2am", note: "After party" }
+        { day: "8pm", time: "Listening party doors" },
+        { day: "10:30pm", time: "After party", note: "The mezzanine DJ moves into the Grand" },
+        { day: "Bars", time: "6pm to 2am", note: "Last call around 1:30 to 1:45am" }
       ],
-      description: "mike.'s first and last ever album listening party, followed by the after party.",
+      description: "mike.'s first and last ever album listening party, followed by the after party. Light bites at happy hour and late night food.",
       access: "Ticketed",
       cta: { label: "See it in the itinerary", kind: "itinerary" },
       short: "Ballroom",

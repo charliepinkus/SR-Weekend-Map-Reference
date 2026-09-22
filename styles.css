@@ -348,7 +348,8 @@ a { color: inherit; }
   /* Warm SR tint over the CARTO Voyager tiles. Edit to taste. */
   --tile-filter: sepia(0.28) saturate(0.78) hue-rotate(-6deg) brightness(1.01) contrast(1.02);
   /* Ink style: CARTO dark tiles inverted, so streets are dark lines on cream */
-  --ink-filter: invert(1) sepia(0.55) saturate(0.55) brightness(1.06) contrast(0.92);
+  --ink-filter: invert(1) brightness(0.8) contrast(1.5) sepia(0.4) saturate(0.7);
+  --ground-wash: #EFE6CF;      /* multiplied over the tiles: aged warm paper */
   --label-filter: sepia(0.2) saturate(0.45) contrast(1.08);
 }
 .leaflet-container { background: var(--ground); font-family: var(--f-body); }
@@ -370,7 +371,7 @@ a { color: inherit; }
   display: flex; align-items: center; justify-content: center; transition: transform 200ms;
 }
 .anc-badge svg { width: 38px; height: 26px; display: block; margin-top: -2px; }
-.anc-lbl { position: absolute; left: 36px; top: -20px; white-space: nowrap; display: flex; flex-direction: column; pointer-events: none;
+.anc-lbl { position: absolute; left: 44px; top: -20px; white-space: nowrap; display: flex; flex-direction: column; pointer-events: none;
   text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 1px var(--paper); }
 .anc-lbl b { font-family: var(--f-display); font-weight: 800; font-size: 18px; line-height: 1.02; letter-spacing: -0.01em; }
 .anc-lbl small { font-size: 12.5px; font-weight: 600; color: var(--crimson-deep); margin-top: 2px; }
@@ -531,3 +532,67 @@ a { color: inherit; }
 .z-regional .hq-badge .hq-mark { width: 22px; height: 29px; right: -12px; bottom: -6px; }
 .z-regional .hq-badge::after { width: 31px; height: 38px; right: -16px; bottom: -10px; }
 .brand img { width: 26px; height: 34px; }
+
+
+/* ================= Art direction pass ================= */
+/* Aged paper wash over the whole basemap. Land goes warm and deeper,
+   streets and labels stay dark. Sits under every SR layer. */
+.map::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 404; background: var(--ground-wash); mix-blend-mode: multiply; }
+.map::after { opacity: 0.55; }
+.ink .tiles-labels { filter: sepia(0.2) saturate(0.5) contrast(1.3) brightness(0.85); opacity: 1; }
+.tiles-osm { filter: sepia(0.5) saturate(0.4) brightness(0.98) contrast(1.05); }
+.river { stroke: #7F9A9C; }
+body, .leaflet-container { background: #E4DBC0; }
+
+/* Hero route: deeper crimson on a dark casing */
+.rt-case.primary { stroke: var(--black); stroke-opacity: 0.85; }
+.rt-line.primary { stroke: #A83F3C; }
+.route-pill.primary span { background: var(--black); color: var(--sand); font-family: var(--f-display); font-weight: 800; letter-spacing: 0.02em; font-size: 13px; border-color: var(--black); }
+.route-pill.primary span::before { background: #A83F3C; }
+.rt-line.secondary { stroke: var(--black); stroke-opacity: 0.55; }
+.rt-case.secondary { stroke-opacity: 0.8; }
+
+/* Designed landmark labels */
+.lm .lm-name { margin-top: 5px; padding: 3px 8px 3px; border-radius: 6px; background: var(--paper); border: 1.2px solid var(--black); box-shadow: 1.5px 1.5px 0 var(--black); font-family: var(--f-display); font-weight: 800; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--black); text-shadow: none; }
+.lm svg { stroke-width: 1.8; filter: drop-shadow(0 0 2px var(--sand)) drop-shadow(0 0 2px var(--sand)); }
+.lm svg .f { fill: var(--paper); }
+.anc-lbl b, .air-lbl b, .pin-lbl b { text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 2px var(--paper), 1px 1px 0 var(--paper); }
+.anc-lbl b { text-transform: uppercase; letter-spacing: 0.06em; font-size: 16px; }
+.air-lbl b { text-transform: uppercase; letter-spacing: 0.06em; font-size: 12.5px; }
+.anc-badge { width: 66px; height: 66px; box-shadow: 4px 4px 0 var(--black); }
+.anc-badge svg { width: 46px; height: 31px; }
+.hq-t small { text-transform: uppercase; letter-spacing: 0.08em; font-size: 10.5px; font-weight: 700; }
+.hq-tag, .hq-help { box-shadow: none; }
+.hq-group { filter: drop-shadow(4px 4px 0 var(--black)); }
+
+/* Cards: warmer paper, heavier outline */
+.card { background: #FAF6EA; }
+.card::before { opacity: 0.4; }
+@media (min-width: 900px) { .card { box-shadow: 6px 6px 0 var(--black); } }
+
+/* Hotel inset: on desktop the Sheraton card becomes a wide inset over the map */
+@media (min-width: 900px) {
+  .card.card--inset { width: min(880px, calc(100vw - 40px)); left: 20px; right: auto; }
+  .card--inset .inset { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; align-items: start; }
+  .card--inset .hd { margin: 12px -4px 0; }
+  .card--inset .hd svg { max-height: none; }
+  .card--inset .inset-list .c-desc { margin-top: 4px; }
+  .card--inset .c-name { font-size: 30px; }
+  .has-sel .ctrl { right: 20px; }
+}
+.inset-list .hl-minor button { min-height: 46px; }
+.inset-list .hl-minor .dot { width: 24px; height: 24px; background: var(--paper); }
+.inset-list .hl-minor .dot svg { stroke: var(--crimson-deep); width: 13px; height: 13px; }
+.inset-list .hl-minor b { font-size: 15px; font-family: var(--f-body); font-weight: 600; }
+
+/* Hotel diagram: deeper fills, dark outlines, secondary pins quieter */
+.hd .plate { fill: #F3EDDA; stroke-width: 1.9; }
+.hd .side { fill: #D9CFAF; }
+.hd .side2 { fill: #C9BE9C; }
+.hd .room { fill: #ECD3C8; stroke: var(--crimson-deep); stroke-width: 1.5; }
+.hd .room-n { fill: var(--crimson-deep); stroke: #ECD3C8; }
+.hd .hp.minor .head { fill: var(--paper); stroke: var(--crimson-deep); }
+.hd .hp.minor .ic { stroke: var(--crimson-deep); }
+.hd .hp.minor .hp-lbl { font-family: var(--f-body); font-weight: 600; font-size: 11px; fill: var(--ink-2); }
+.hd .hp.minor.on .head { fill: var(--crimson); }
+.hd .hp.minor.on .ic { stroke: var(--sand); }
