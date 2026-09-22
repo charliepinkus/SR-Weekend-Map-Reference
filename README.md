@@ -23,6 +23,14 @@ Add `&clean=1` to hide the Design reference tag.
 - Flyhi: `/?loc=flyhi`
 - Certified Tattoo: `/?loc=certified-tattoo`
 
+## Basemap, ink style
+
+The map inverts CARTO's dark tile set so streets draw as dark ink on cream, closer to a hand-authored map, with a separate light label layer on top. Rivers through town are drawn from bundled OpenStreetMap data. The style is set by `basemap.style` in `locations.js`. Set it to `"voyager"` for the plain colored map. The tint is `--ink-filter` in `styles.css`.
+
+## Routes
+
+Two routes live in `locations.js` under `routes`. The Sheraton to Red Rocks drive is `primary` and always draws in crimson. The airport to Sheraton drive draws faintly and strengthens when the airport is selected. Times shown are estimates for the prototype.
+
 ## What this pass added
 
 - Illustrated markers, all drawn in code: a hotel badge with the SR monogram for the Sheraton, a rock formation for Red Rocks, and glyph pins (saloon, flash star, leaf, bus) for the other stops

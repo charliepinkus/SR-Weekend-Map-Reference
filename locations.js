@@ -37,35 +37,60 @@ window.SR_MAP = {
     // map. If CARTO refuses the tiles, the page switches to OpenStreetMap's
     // standard tiles (no key) so the map never loads blank.
     // The warm SR tint is applied in styles.css (--tile-filter).
+    // "ink" inverts CARTO's dark tiles so streets draw as dark ink on cream,
+    // closer to a hand-authored map. "voyager" is the plain colored map.
     basemap: {
+      style: "ink",
+      ink: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png?key=cb1_2ka0_1_a41e46da6e6dddc06d5efeba",
+      inkLabels: "https://{s}.basemaps.cartocdn.com/rastertiles/light_only_labels/{z}/{x}/{y}{r}.png?key=cb1_2ka0_1_a41e46da6e6dddc06d5efeba",
       base: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_2ka0_1_a41e46da6e6dddc06d5efeba",
       labels: null,
       fallback: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
     },
 
+    // Airport to Sheraton time is an estimate for the prototype, not a promise.
     // Zoom levels for the one continuous map
     zoom: { hotel: 16.5, downtown: 14.5, place: 15 }
   },
 
-  /* ---------------- THE DRIVE TO RED ROCKS ----------------
-     A hand-traced path along the real roads (Speer, 6th Ave, I-70, CO 26).
-     When snapToRoads is true the page asks the public OSRM router for the
-     exact road geometry and swaps it in. If that fails, this path stays. */
-  route: {
-    show: true,
-    from: "sheraton",
-    to: "red-rocks",
-    label: "Sheraton to Red Rocks, about 30 min",
-    snapToRoads: true,
-    path: [
-      [39.7421, -104.9899], [39.7395, -104.9938], [39.7380, -104.9985], [39.7356, -105.0100],
-      [39.7350, -105.0250], [39.7340, -105.0400], [39.7330, -105.0520], [39.7290, -105.0680],
-      [39.7250, -105.0810], [39.7200, -105.1000], [39.7180, -105.1100], [39.7190, -105.1400],
-      [39.7220, -105.1650], [39.7100, -105.1860], [39.6900, -105.1960], [39.6750, -105.2010],
-      [39.6654, -105.2057]
-    ]
-  },
+  /* ---------------- ROUTES ----------------
+     Hand-traced paths along the real roads. With snapToRoads on, the page
+     asks the public OSRM router for exact road geometry and swaps it in.
+     If that fails, these paths stay. `primary` gets the crimson hero
+     treatment. Others draw faintly and strengthen when either end is selected. */
+  routes: [
+    {
+      id: "to-red-rocks",
+      show: true,
+      primary: true,
+      from: "sheraton",
+      to: "red-rocks",
+      label: "Sheraton to Red Rocks, about 30 min",
+      snapToRoads: true,
+      path: [
+        [39.7421, -104.9899], [39.7395, -104.9938], [39.7380, -104.9985], [39.7356, -105.0100],
+        [39.7350, -105.0250], [39.7340, -105.0400], [39.7330, -105.0520], [39.7290, -105.0680],
+        [39.7250, -105.0810], [39.7200, -105.1000], [39.7180, -105.1100], [39.7190, -105.1400],
+        [39.7220, -105.1650], [39.7100, -105.1860], [39.6900, -105.1960], [39.6750, -105.2010],
+        [39.6654, -105.2057]
+      ]
+    },
+    {
+      id: "from-airport",
+      show: true,
+      primary: false,
+      from: "airport",
+      to: "sheraton",
+      label: "Airport to Sheraton, about 40 min",
+      snapToRoads: true,
+      path: [
+        [39.8561, -104.6737], [39.849, -104.673], [39.834, -104.742], [39.800, -104.800], [39.784, -104.823],
+        [39.782, -104.862], [39.781, -104.902], [39.780, -104.945], [39.779, -104.978], [39.779, -104.996],
+        [39.770, -104.996], [39.758, -104.994], [39.748, -104.992], [39.7421, -104.9899]
+      ]
+    }
+  ],
 
   /* ---------------- HOME BASE ---------------- */
   hq: {
@@ -219,6 +244,19 @@ window.SR_MAP = {
   /* ---------------- AROUND DENVER ---------------- */
   places: [
     {
+      id: "airport",
+      show: true,
+      type: "airport",
+      name: "Denver International Airport",
+      short: "Flying in",
+      kind: "Getting here",
+      address: "8500 Peña Blvd, Denver, CO 80249",
+      lat: 39.8561, lng: -104.6737,
+      hours: [],
+      description: "Flying in for SR Weekend? The Sheraton is the weekend home base downtown, about 40 minutes by car.",
+      cta: { label: "Directions to Sheraton", kind: "apple-directions", to: "1550 Court Pl, Denver, CO 80202" }
+    },
+    {
       id: "red-rocks",
       show: true,
       type: "anchor",
@@ -319,7 +357,11 @@ window.SR_MAP = {
 
   /* Drawn landmarks for orientation. Not tappable. */
   landmarks: [
-    { id: "union-station", name: "Union Station", art: "union-station", lat: 39.7532, lng: -105.0001, minZoom: 14 },
-    { id: "capitol", name: "State Capitol", art: "capitol", lat: 39.73927, lng: -104.98484, minZoom: 14 }
+    { id: "union-station", name: "Union Station", art: "union-station", lat: 39.7532, lng: -105.0001, minZoom: 12 },
+    { id: "capitol", name: "State Capitol", art: "capitol", lat: 39.73927, lng: -104.98484, minZoom: 12 },
+    /* Faint foothill ridgelines west of town, regional zoom only. Orientation, not places. */
+    { id: "hills-1", art: "hills", lat: 39.76, lng: -105.31, maxZoom: 12.5 },
+    { id: "hills-2", art: "hills", lat: 39.61, lng: -105.29, maxZoom: 12.5 },
+    { id: "hills-3", art: "hills", lat: 39.88, lng: -105.33, maxZoom: 12.5 }
   ]
 };

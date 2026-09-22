@@ -41,9 +41,11 @@
   };
   const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[n] || ""}</svg>`;
   const ROCKS = '<svg viewBox="0 0 48 32" aria-hidden="true"><path class="rk" d="M2 29 L6 16 L10 20 L14 9 L19 22 L21 29 Z"/><path class="rk" d="M17 29 L22 12 L27 6 L33 18 L36 29 Z"/><path class="rk" d="M32 29 L36 19 L41 14 L46 29 Z"/><path class="rl" d="M9 29 L13 22 M25 29 L28 20 M39 29 L42 23 M2 30h44"/></svg>';
+  const PLANE = '<svg viewBox="0 0 28 28" aria-hidden="true"><path class="pl" d="M14 3.5v8l9.5 5.5v2.5L14 16.8v5.2l3 2.2V26l-3-1-3 1v-1.8l3-2.2v-5.2L4.5 19.5V17l9.5-5.5v-8z"/></svg>';
   const ART = {
-    "union-station": '<svg viewBox="0 0 64 40" width="58" height="36"><path class="f" d="M3 22h14v16H3zM47 22h14v16H47z"/><path class="f" d="M17 14h30v24H17z"/><path d="M17 14 L32 8.5 L47 14"/><path d="M21 38V27a3 3 0 0 1 6 0v11M29 38V27a3 3 0 0 1 6 0v11M37 38V27a3 3 0 0 1 6 0v11"/><rect class="fc" x="21" y="1" width="22" height="4.5" rx="1"/><path d="M25 5.5v4M39 5.5v4"/><path d="M6 28h8M50 28h8M6 33h8M50 33h8"/><path d="M1 38h62"/></svg>',
-    capitol: '<svg viewBox="0 0 44 50" width="38" height="43"><path class="f" d="M4 48V35h36v13z"/><path d="M10 48v-9M16 48v-9M22 48v-9M28 48v-9M34 48v-9M4 38.5h36"/><path class="f" d="M12 35v-6h20v6z"/><path class="f" d="M13 29a9 10.5 0 0 1 18 0z"/><path d="M22 18.5v-7M19.5 11.5h5M17 29v-4M22 29v-5M27 29v-4"/><path d="M1 48h42"/></svg>'
+    hills: '<svg viewBox="0 0 120 40" width="110" height="37"><path class="hl" d="M2 36 C14 30 20 22 30 20 C38 19 42 26 50 25 C60 24 66 12 78 12 C88 12 92 20 100 22 C108 24 114 32 118 36"/><path class="hl2" d="M14 36 C22 33 26 29 34 29 C41 29 46 32 54 31 C62 30 70 23 80 23 C90 23 96 29 104 31 C110 33 114 35 118 36"/></svg>',
+    "union-station": '<svg viewBox="0 0 64 40" width="66" height="41"><path class="f" d="M3 22h14v16H3zM47 22h14v16H47z"/><path class="f" d="M17 14h30v24H17z"/><path d="M17 14 L32 8.5 L47 14"/><path d="M21 38V27a3 3 0 0 1 6 0v11M29 38V27a3 3 0 0 1 6 0v11M37 38V27a3 3 0 0 1 6 0v11"/><rect class="fc" x="21" y="1" width="22" height="4.5" rx="1"/><path d="M25 5.5v4M39 5.5v4"/><path d="M6 28h8M50 28h8M6 33h8M50 33h8"/><path d="M1 38h62"/></svg>',
+    capitol: '<svg viewBox="0 0 44 50" width="42" height="48"><path class="f" d="M4 48V35h36v13z"/><path d="M10 48v-9M16 48v-9M22 48v-9M28 48v-9M34 48v-9M4 38.5h36"/><path class="f" d="M12 35v-6h20v6z"/><path class="f" d="M13 29a9 10.5 0 0 1 18 0z"/><path d="M22 18.5v-7M19.5 11.5h5M17 29v-4M22 29v-5M27 29v-4"/><path d="M1 48h42"/></svg>'
   };
   /* Hand-drawn line helpers: a seeded wobble so shapes stay stable between renders */
   function rng(seed) { return function () { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -79,7 +81,7 @@
   /* ---------- Map ---------- */
   const map = L.map("map", {
     zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
-    minZoom: 9.5, maxZoom: 19, maxBounds: [[39.35, -105.75], [40.15, -104.45]], maxBoundsViscosity: 0.8,
+    minZoom: 9, maxZoom: 19, maxBounds: [[39.35, -105.75], [40.15, -104.45]], maxBoundsViscosity: 0.8,
     tap: true, attributionControl: true
   });
   map.attributionControl.setPrefix(false);
@@ -88,8 +90,14 @@
   map.getPane("labelPane").style.pointerEvents = "none";
   map.createPane("hotelPane").style.zIndex = 440;
 
-  const base = L.tileLayer(CFG.basemap.base, { subdomains: "abcd", maxZoom: 20, className: "tiles-base", attribution: CFG.basemap.attribution }).addTo(map);
-  if (CFG.basemap.labels) L.tileLayer(CFG.basemap.labels, { subdomains: "abcd", maxZoom: 20, className: "tiles-labels", pane: "labelPane" }).addTo(map);
+  const ink = CFG.basemap.style === "ink" && CFG.basemap.ink;
+  document.body.classList.toggle("ink", !!ink);
+  const base = L.tileLayer(ink ? CFG.basemap.ink : CFG.basemap.base, { subdomains: "abcd", maxZoom: 20, className: "tiles-base" + (ink ? " tiles-ink" : ""), attribution: CFG.basemap.attribution }).addTo(map);
+  const labelUrl = ink ? CFG.basemap.inkLabels : CFG.basemap.labels;
+  if (labelUrl) L.tileLayer(labelUrl, { subdomains: "abcd", maxZoom: 20, className: "tiles-labels", pane: "labelPane" }).addTo(map);
+  // Rivers through town, drawn on top of the tiles so water reads as water
+  map.createPane("waterPane").style.zIndex = 405;
+  (GEO.rivers || []).forEach((line) => L.polyline(line, { pane: "waterPane", className: "river", color: "#8FA9AA", weight: 4, opacity: 0.9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map));
 
   // If CARTO refuses the tiles, switch to OpenStreetMap's standard tiles.
   // If those fail too (offline preview), draw downtown streets from bundled OSM data.
@@ -100,6 +108,7 @@
     if (!swapped && tileErr > 4 && tileOk === 0 && CFG.basemap.fallback) {
       swapped = true;
       map.removeLayer(base);
+      document.body.classList.remove("ink");
       alt = L.tileLayer(CFG.basemap.fallback, { maxZoom: 19, className: "tiles-base tiles-osm",
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
       let aOk = 0, aErr = 0;
@@ -123,26 +132,29 @@
   const HQLL = [HQ.lat, HQ.lng];
 
   /* ---------- Route ---------- */
-  const R = D.route;
-  let routeCase, routeLine, routePill;
-  if (R && R.show) {
-    routeCase = L.polyline(R.path, { pane: "routePane", className: "rt-case", color: "#FBFAF4", weight: 10, opacity: 0.9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
-    routeLine = L.polyline(R.path, { pane: "routePane", className: "rt-line", color: "#BA514E", weight: 5.5, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
-    const mid = R.path[Math.floor(R.path.length * 0.55)];
-    routePill = L.marker(mid, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<div class="route-pill"><span>${esc(R.label)}</span></div>` }) }).addTo(map);
-    if (R.snapToRoads) {
-      const a = R.path[0], b = R.path[R.path.length - 1];
-      fetch(`https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`)
-        .then((r) => (r.ok ? r.json() : Promise.reject()))
+  const routes = (D.routes || []).filter((r) => r.show !== false).map((r) => {
+    const cls = r.primary ? "primary" : "secondary";
+    const o = { pane: "routePane", lineCap: "round", lineJoin: "round", interactive: false };
+    const rt = {
+      def: r,
+      kase: L.polyline(r.path, Object.assign({ className: "rt-case " + cls, color: "#FBFAF4", weight: r.primary ? 10 : 7, opacity: r.primary ? 0.9 : 0.7 }, o)).addTo(map),
+      line: L.polyline(r.path, Object.assign({ className: "rt-line " + cls, color: r.primary ? "#BA514E" : "#4A443B", weight: r.primary ? 5.5 : 3, opacity: r.primary ? 1 : 0.55 }, o)).addTo(map),
+      pill: L.marker(r.path[Math.floor(r.path.length * 0.55)], { interactive: false, keyboard: false, icon: L.divIcon({ className: "rt-pill-m " + cls, iconSize: [0, 0], html: `<div class="route-pill ${cls}"><span>${esc(r.label)}</span></div>` }) }).addTo(map)
+    };
+    if (r.snapToRoads) {
+      const p0 = r.path[0], p1 = r.path[r.path.length - 1];
+      fetch(`https://router.project-osrm.org/route/v1/driving/${p0[1]},${p0[0]};${p1[1]},${p1[0]}?overview=full&geometries=geojson`)
+        .then((x) => (x.ok ? x.json() : Promise.reject()))
         .then((j) => {
           const c = j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates;
           if (!c || c.length < 3) return;
           const ll = c.map((p) => [p[1], p[0]]);
-          routeCase.setLatLngs(ll); routeLine.setLatLngs(ll);
-          routePill.setLatLng(ll[Math.floor(ll.length * 0.55)]);
+          rt.kase.setLatLngs(ll); rt.line.setLatLngs(ll); rt.pill.setLatLng(ll[Math.floor(ll.length * 0.55)]);
         }).catch(() => {});
     }
-  }
+    return rt;
+  });
+  const routeFor = (id) => routes.find((rt) => rt.def.to === id || (rt.def.from === id && rt.def.from !== "sheraton"));
 
   /* ---------- Sheraton footprint ---------- */
   const foot = L.layerGroup((GEO.hotelFootprints || []).map((poly) =>
@@ -153,7 +165,7 @@
   const markers = [];
   function addMarker(latlng, html, o) {
     const m = L.marker(latlng, { icon: L.divIcon({ className: "sr-m " + (o.cls || ""), html, iconSize: [0, 0] }), zIndexOffset: o.z || 0, keyboard: false, interactive: !o.static });
-    const it = Object.assign({ m, latlng, minZoom: 0, pri: 10, on: false }, o);
+    const it = Object.assign({ m, latlng, minZoom: 0, maxZoom: 99, pri: 10, on: false }, o);
     if (!o.static) m.on("click", (e) => {
       const t = e.originalEvent && e.originalEvent.target.closest && e.originalEvent.target.closest("[data-sel]");
       select(t ? t.dataset.sel : o.id);
@@ -177,7 +189,12 @@
   (D.places || []).filter((p) => p.show !== false).forEach((p) => {
     byId[p.id] = Object.assign({ _t: p.type }, p);
     let html;
-    if (p.type === "anchor") {
+    if (p.type === "airport") {
+      html = `<button class="air" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
+          <span class="air-badge">${PLANE}</span>
+          <span class="air-lbl"><b>Denver International Airport</b><small>${esc(p.short || "")}</small></span></button>`;
+      addMarker([p.lat, p.lng], html, { id: p.id, cls: "airport", z: 800, pri: 90, label: true });
+    } else if (p.type === "anchor") {
       html = `<button class="anc" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
           <span class="anc-badge">${ROCKS}</span>
           <span class="anc-lbl"><b>${esc(p.name.replace(/ Amphitheatre$/, ""))}</b><small>${esc(p.short || "")}</small></span></button>`;
@@ -195,15 +212,15 @@
   });
 
   (D.landmarks || []).forEach((l) => {
-    addMarker([l.lat, l.lng], `<div class="lm-in">${ART[l.art] || ""}<span class="lm-name">${esc(l.name)}</span></div>`,
-      { id: l.id, cls: "lm", static: true, pri: 20, minZoom: l.minZoom || 14 });
+    addMarker([l.lat, l.lng], `<div class="lm-in${l.art === "hills" ? " hills" : ""}">${ART[l.art] || ""}${l.name ? `<span class="lm-name">${esc(l.name)}</span>` : ""}</div>`,
+      { id: l.id, cls: "lm" + (l.art === "hills" ? " lm-hills" : ""), static: true, pri: l.art === "hills" ? 5 : 30, minZoom: l.minZoom || 0, maxZoom: l.maxZoom || 99 });
   });
 
   /* ---------- Zoom-dependent layers and label culling ---------- */
   function refresh() {
     const z = map.getZoom();
     markers.forEach((it) => {
-      const want = z >= it.minZoom;
+      const want = z >= it.minZoom && z <= (it.maxZoom == null ? 99 : it.maxZoom);
       if (want && !it.on) {
         it.m.addTo(map); it.on = true;
         const el = it.m.getElement();
@@ -214,7 +231,7 @@
     if (z >= 15) { if (!map.hasLayer(foot)) foot.addTo(map); } else if (map.hasLayer(foot)) foot.remove();
     app.classList.toggle("z-regional", z < 12.5);
     app.classList.toggle("z-close", z >= 15);
-    if (routePill) { const show = z < 14; const el = routePill.getElement(); if (el) el.style.display = show ? "" : "none"; }
+    routes.forEach((rt) => { const el = rt.pill.getElement(); if (el) el.style.display = z < 14 ? "" : "none"; });
     requestAnimationFrame(cull);
   }
 
@@ -228,7 +245,7 @@
     live.forEach((it) => it.m.getElement().classList.remove("culled", "nolabel"));
     live.forEach((it) => {
       const el = it.m.getElement();
-      const core = el.querySelector(".hq-group, .anc-badge, .pin-drop, .util-sq, .lm-in");
+      const core = el.querySelector(".hq-group, .anc-badge, .air-badge, .pin-drop, .util-sq, .lm-in");
       if (it.id === HQ.id) rects.push(pad(el.querySelector(".hq-badge").getBoundingClientRect(), 2));
       if (!core) return;
       const r = pad(core.getBoundingClientRect(), 2);
@@ -238,7 +255,7 @@
     live.forEach((it) => {
       const el = it.m.getElement();
       if (el.classList.contains("culled")) return;
-      const lbl = el.querySelector(".pin-lbl, .anc-lbl");
+      const lbl = el.querySelector(".pin-lbl, .anc-lbl, .air-lbl");
       if (!lbl) return;
       if (it.cls === "pin") {
         const pt = map.latLngToContainerPoint(it.latlng);
@@ -253,10 +270,11 @@
       }
       if (hit(r) && !el.classList.contains("is-on")) el.classList.add("nolabel"); else rects.push(r);
     });
-    if (routePill && routePill.getElement()) {
-      const pe = routePill.getElement(), r = pad(pe.firstElementChild.getBoundingClientRect(), 4);
-      pe.classList.toggle("culled", hit(r));
-    }
+    routes.forEach((rt) => {
+      const pe = rt.pill.getElement(); if (!pe) return;
+      const r = pad(pe.firstElementChild.getBoundingClientRect(), 4);
+      if (hit(r)) pe.classList.add("culled"); else { pe.classList.remove("culled"); rects.push(r); }
+    });
   }
   map.on("zoomend", refresh);
   map.on("moveend", () => requestAnimationFrame(cull));
@@ -264,12 +282,13 @@
   /* ---------- Views ---------- */
   function homeView(animate) {
     const pts = [HQLL, [byId["red-rocks"].lat, byId["red-rocks"].lng]];
-    if (isDesk()) {
-      ["certified-tattoo", "denver-improv", "whiskey-row"].forEach((id) => byId[id] && pts.push([byId[id].lat, byId[id].lng]));
-      map.fitBounds(pts, { paddingTopLeft: [90, 150], paddingBottomRight: [140, 90], animate: !!animate, maxZoom: 13 });
-    } else {
-      if (byId["certified-tattoo"]) pts.push([byId["certified-tattoo"].lat, byId["certified-tattoo"].lng]);
-      map.fitBounds(pts, { paddingTopLeft: [26, 150], paddingBottomRight: [60, 70], animate: !!animate, maxZoom: 13 });
+    if (byId.airport) pts.push([byId.airport.lat, byId.airport.lng]);
+    if (isDesk()) map.fitBounds(pts, { paddingTopLeft: [120, 130], paddingBottomRight: [200, 80], animate: !!animate, maxZoom: 13 });
+    else {
+      // Phones frame the Sheraton and Red Rocks. The airport sits just off to the east, one swipe away.
+      const mp = [HQLL, [byId["red-rocks"].lat, byId["red-rocks"].lng]];
+      if (byId["certified-tattoo"]) mp.push([byId["certified-tattoo"].lat, byId["certified-tattoo"].lng]);
+      map.fitBounds(mp, { paddingTopLeft: [30, 150], paddingBottomRight: [60, 80], animate: !!animate, maxZoom: 13 });
     }
   }
 
@@ -287,8 +306,8 @@
   }
 
   function fitWithCard(latlngs) {
-    const pad = isDesk() ? { paddingTopLeft: [70, 110], paddingBottomRight: [560, 60] }
-      : { paddingTopLeft: [30, 90], paddingBottomRight: [30, card.getBoundingClientRect().height + 30] };
+    const pad = isDesk() ? { paddingTopLeft: [70, 110], paddingBottomRight: [600, 60] }
+      : { paddingTopLeft: [60, 130], paddingBottomRight: [90, card.getBoundingClientRect().height + 40] };
     map.flyToBounds(latlngs, Object.assign({ duration: 0.6, maxZoom: 13 }, pad));
   }
 
@@ -300,7 +319,10 @@
     if (p.appleMapsUrl || p.googleMapsUrl) return { apple: p.appleMapsUrl, google: p.googleMapsUrl };
     const addr = p.address;
     if (!addr) return null;
-    if (kind === "apple-directions") return { apple: "https://maps.apple.com/?daddr=" + enc(addr), google: "https://www.google.com/maps/dir/?api=1&destination=" + enc(addr) };
+    if (kind === "apple-directions") {
+      const to = (p.cta && p.cta.to) || addr;
+      return { apple: "https://maps.apple.com/?daddr=" + enc(to), google: "https://www.google.com/maps/dir/?api=1&destination=" + enc(to) };
+    }
     const q = p.mapsQuery || p.name;
     return { apple: "https://maps.apple.com/?q=" + enc(q) + "&address=" + enc(addr), google: "https://www.google.com/maps/search/?api=1&query=" + enc(q + ", " + addr) };
   }
@@ -453,14 +475,15 @@
     const hqEl = hqIt.m.getElement();
     if (hqEl) { hqEl.classList.toggle("is-on", inHotel && !p.help); hqEl.classList.toggle("help-on", !!p.help); }
     markers.forEach((it) => { const el = it.m.getElement(); if (el && it.id !== HQ.id) el.classList.toggle("is-on", it.id === id); });
-    app.classList.toggle("route-on", id === "red-rocks" || id === "shuttle");
+    routes.forEach((rt) => { const on = rt.def.to === id || rt.def.from === id || (id === "shuttle" && rt.def.primary); [rt.kase, rt.line, rt.pill].forEach((l) => { const el = l.getElement ? l.getElement() : null; if (el) el.classList.toggle("is-on", on); }); });
+    app.classList.toggle("route-on", !!routeFor(id) || id === "shuttle");
     card.hidden = false;
     cardScroll.scrollTop = 0;
     setParam(id);
     const instant = opts && opts.instant;
     requestAnimationFrame(() => {
       if (inHotel) focusOn(HQLL, Math.max(map.getZoom(), CFG.zoom.hotel));
-      else if (id === "red-rocks" && R) fitWithCard(routeLine.getLatLngs());
+      else if (routeFor(id) && id !== "sheraton") fitWithCard(routeFor(id).line.getLatLngs());
       else focusOn([p.lat, p.lng], Math.max(map.getZoom(), p.type === "utility" ? 16 : CFG.zoom.place - (p.minZoom ? 0 : 1)));
       if (instant) map.stop();
     });
@@ -469,6 +492,7 @@
     if (!sel) return;
     sel = null;
     app.classList.remove("has-sel", "route-on");
+    routes.forEach((rt) => [rt.kase, rt.line, rt.pill].forEach((l) => { const el = l.getElement ? l.getElement() : null; if (el) el.classList.remove("is-on"); }));
     markers.forEach((it) => { const el = it.m.getElement(); if (el) el.classList.remove("is-on", "help-on"); });
     card.hidden = true;
     card.style.transform = "";

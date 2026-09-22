@@ -347,6 +347,8 @@ a { color: inherit; }
 :root {
   /* Warm SR tint over the CARTO Voyager tiles. Edit to taste. */
   --tile-filter: sepia(0.28) saturate(0.78) hue-rotate(-6deg) brightness(1.01) contrast(1.02);
+  /* Ink style: CARTO dark tiles inverted, so streets are dark lines on cream */
+  --ink-filter: invert(1) sepia(0.55) saturate(0.55) brightness(1.06) contrast(0.92);
   --label-filter: sepia(0.2) saturate(0.45) contrast(1.08);
 }
 .leaflet-container { background: var(--ground); font-family: var(--f-body); }
@@ -474,3 +476,58 @@ a { color: inherit; }
 .hd .door + .hint { font-weight: 700; }
 .hd .hp-lbl { font-size: 13px; }
 .hd .hp .head { stroke-width: 1.7; }
+
+
+/* ================= Ink basemap pass ================= */
+.tiles-ink { filter: var(--ink-filter); }
+.ink .tiles-labels { filter: sepia(0.3) saturate(0.4) contrast(1.1); opacity: 0.85; }
+.ink .map::after { opacity: 0.5; }
+.river { stroke-linecap: round; }
+.route-on .rt-case.primary { stroke-width: 12px; }
+.route-on .rt-line.primary { stroke-width: 7.5px; }
+.rt-line.secondary { stroke-dasharray: 1 9; }
+.rt-line.secondary.is-on { stroke: var(--black); stroke-opacity: 0.9; stroke-width: 4.5px; stroke-dasharray: none; }
+.rt-case.secondary.is-on { stroke-opacity: 1; stroke-width: 9px; }
+.route-pill.secondary span { font-size: 11.5px; color: var(--ink-2); padding: 5px 10px; box-shadow: 1.5px 1.5px 0 var(--black); }
+.route-pill.secondary span::before { background: var(--ink-2); width: 12px; }
+.rt-pill-m.secondary:not(.is-on) { opacity: 0.75; }
+.has-sel .rt-pill-m.secondary:not(.is-on) { opacity: 0.4; }
+.rt-pill-m.secondary.is-on .route-pill span { color: var(--black); }
+
+/* Airport, level 2 anchor */
+.air, .anc { position: absolute; left: 0; top: 0; width: 0; height: 0; overflow: visible; }
+.air-badge { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 12px; background: var(--paper); border: 1.5px solid var(--black); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; transition: transform 200ms, background 200ms; }
+.air-badge svg { width: 28px; height: 28px; display: block; }
+.air-badge .pl { fill: var(--black); stroke: var(--black); stroke-width: 1; stroke-linejoin: round; }
+.air-lbl { position: absolute; right: 30px; top: -18px; white-space: nowrap; display: flex; flex-direction: column; align-items: flex-end; text-align: right; pointer-events: none; text-shadow: 0 0 3px var(--paper), 0 0 3px var(--paper), 0 0 3px var(--paper); }
+.air-lbl b { font-family: var(--f-display); font-weight: 800; font-size: 15px; line-height: 1.05; white-space: normal; max-width: 150px; }
+.air-lbl small { font-size: 12px; font-weight: 600; color: var(--ink-2); margin-top: 2px; }
+.airport.is-on .air-badge { background: var(--black); }
+.airport.is-on .air-badge .pl { fill: var(--sand); stroke: var(--sand); }
+.c-kind i.airport { background: var(--paper); border-radius: 3px; }
+
+/* Landmarks: bigger, sketched, persistent */
+.lm svg { stroke-width: 1.7; }
+.lm .lm-name { font-size: 12.5px; font-weight: 700; margin-top: 4px; text-shadow: 0 0 3px var(--sand), 0 0 3px var(--sand), 0 0 3px var(--sand), 0 0 2px var(--sand); }
+.lm-in.hills { transform: translate(-50%, -50%); }
+.lm .hl { fill: none; stroke: var(--black); stroke-width: 1.4; stroke-linecap: round; opacity: 0.45; }
+.lm .hl2 { fill: none; stroke: var(--black); stroke-width: 1.1; stroke-linecap: round; opacity: 0.25; }
+.lm-hills { z-index: 1 !important; }
+
+/* Home base: sand badge, crimson linework, monogram that reads at any size */
+.hq-badge { background: var(--paper); width: 64px; height: 64px; }
+.hq-badge svg { width: 42px; height: 38px; }
+.hq-badge .bf { fill: var(--paper); stroke: var(--crimson-deep); stroke-width: 1.7; }
+.hq-badge .bw { stroke: var(--crimson-deep); }
+.hq-badge .bl { stroke: var(--crimson-deep); }
+.hq-badge .hq-mark { right: -14px; bottom: -8px; width: 26px; height: 34px; background: var(--crimson); filter: none; }
+.hq-badge::after { content: ""; position: absolute; right: -19px; bottom: -13px; width: 36px; height: 44px; border-radius: 10px; background: var(--paper); border: 1.5px solid var(--black); z-index: -1; box-shadow: 2px 2px 0 var(--black); }
+.hq-badge { z-index: 2; isolation: isolate; }
+.hq.is-on .hq-badge { background: var(--sand); }
+.hq.is-on .hq-badge .bf { fill: var(--sand); stroke: var(--black); }
+.hq.is-on .hq-badge .bw, .hq.is-on .hq-badge .bl { stroke: var(--black); }
+.z-regional .hq-badge { width: 54px; height: 54px; }
+.z-regional .hq-badge svg { width: 34px; height: 31px; }
+.z-regional .hq-badge .hq-mark { width: 22px; height: 29px; right: -12px; bottom: -6px; }
+.z-regional .hq-badge::after { width: 31px; height: 38px; right: -16px; bottom: -10px; }
+.brand img { width: 26px; height: 34px; }
