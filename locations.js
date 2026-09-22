@@ -31,11 +31,14 @@ window.SR_MAP = {
     helpDeskUrl: "#steve-help-desk",   // placeholder until the online help desk exists
     itineraryUrl: "#itinerary",         // placeholder until the itinerary section exists
 
-    // Basemap. CARTO Voyager raster tiles, no key needed. The warm SR tint is
-    // applied in styles.css (--tile-filter). Swap URLs to change the look.
+    // Basemap. CARTO Voyager tiles, using the same CARTO key as the Denver OOH
+    // map. If CARTO refuses the tiles, the page switches to OpenStreetMap's
+    // standard tiles (no key) so the map never loads blank.
+    // The warm SR tint is applied in styles.css (--tile-filter).
     basemap: {
-      base: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-      labels: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+      base: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=cb1_2ka0_1_a41e46da6e6dddc06d5efeba",
+      labels: null,
+      fallback: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
     },
 

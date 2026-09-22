@@ -56,21 +56,34 @@
   map.createPane("hotelPane").style.zIndex = 440;
 
   const base = L.tileLayer(CFG.basemap.base, { subdomains: "abcd", maxZoom: 20, className: "tiles-base", attribution: CFG.basemap.attribution }).addTo(map);
-  L.tileLayer(CFG.basemap.labels, { subdomains: "abcd", maxZoom: 20, className: "tiles-labels", pane: "labelPane" }).addTo(map);
+  if (CFG.basemap.labels) L.tileLayer(CFG.basemap.labels, { subdomains: "abcd", maxZoom: 20, className: "tiles-labels", pane: "labelPane" }).addTo(map);
 
-  // If tiles can't load (offline preview), draw downtown streets from bundled OSM data.
-  let tileOk = 0, tileErr = 0, fallbackOn = false;
+  // If CARTO refuses the tiles, switch to OpenStreetMap's standard tiles.
+  // If those fail too (offline preview), draw downtown streets from bundled OSM data.
+  let tileOk = 0, tileErr = 0, swapped = false, fallbackOn = false, alt = null;
   base.on("tileload", () => { tileOk++; });
   base.on("tileerror", () => {
     tileErr++;
-    if (!fallbackOn && tileErr > 6 && tileOk === 0 && GEO.fallbackRoads) {
+    if (!swapped && tileErr > 4 && tileOk === 0 && CFG.basemap.fallback) {
+      swapped = true;
+      map.removeLayer(base);
+      alt = L.tileLayer(CFG.basemap.fallback, { maxZoom: 19, className: "tiles-base tiles-osm",
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
+      let aOk = 0, aErr = 0;
+      alt.on("tileload", () => { aOk++; });
+      alt.on("tileerror", () => { aErr++; if (aErr > 6 && aOk === 0) drawFallback(); });
+    }
+  });
+  function drawFallback() {
+    {
+      if (fallbackOn || !GEO.fallbackRoads) return;
       fallbackOn = true;
       app.classList.add("offline");
       const w = { motorway: 7, primary: 5, secondary: 4, tertiary: 3 };
       Object.keys(w).forEach((k) => (GEO.fallbackRoads[k] || []).forEach((line) =>
         L.polyline(line, { color: "#FFFFFF", weight: w[k], opacity: 1, interactive: false }).addTo(map)));
     }
-  });
+  }
 
   let sel = null;
   const HQ = D.hq;

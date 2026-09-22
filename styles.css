@@ -410,3 +410,6 @@ a { color: inherit; }
 }
 .hq-help { position: relative; }
 .z-regional .hq::after { content: ""; position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: var(--crimson); border: 2px solid var(--black); box-shadow: 0 0 0 3px var(--paper); }
+
+/* OpenStreetMap standard tiles are more colorful, so they get a stronger tint */
+.tiles-osm { filter: sepia(0.4) saturate(0.45) hue-rotate(-8deg) brightness(1.04) contrast(0.92); }
