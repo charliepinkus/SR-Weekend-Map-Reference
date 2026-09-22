@@ -23,6 +23,14 @@ Add `&clean=1` to hide the Design reference tag.
 - Flyhi: `/?loc=flyhi`
 - Certified Tattoo: `/?loc=certified-tattoo`
 
+## What this pass added
+
+- Illustrated markers, all drawn in code: a hotel badge with the SR monogram for the Sheraton, a rock formation for Red Rocks, and glyph pins (saloon, flash star, leaf, bus) for the other stops
+- A cream-cased crimson route labeled "Sheraton to Red Rocks, about 30 min"
+- A placeholder QR graphic on the Certified Tattoo card (`qr: true` in `locations.js`). It does not scan anywhere and is labeled as a placeholder
+- A hand-drawn hotel guide with room names, entrances, front desk and escalators
+- Light paper grain on cards and sketched outlines on pins
+
 ## Files
 
 - `index.html`, `styles.css`, `app.js` are the page, styling and behavior

@@ -9,6 +9,8 @@
     name, short (one line under the name on the map), icon,
     lat and lng (where the marker sits), address (what the card shows),
     hours, description, access, cta.
+    qr: true adds a placeholder QR graphic to the card, with qrLabel as its caption.
+    icon picks the glyph in the pin: saloon, flash, leaf, glass, star, bus, mic, pen.
   Optional: appleMapsUrl and googleMapsUrl override the links the map builds
   from the address. minZoom hides a marker until the map is zoomed in that far.
 
@@ -54,7 +56,7 @@ window.SR_MAP = {
     show: true,
     from: "sheraton",
     to: "red-rocks",
-    label: "About 30 min to Red Rocks",
+    label: "Sheraton to Red Rocks, about 30 min",
     snapToRoads: true,
     path: [
       [39.7421, -104.9899], [39.7395, -104.9938], [39.7380, -104.9985], [39.7356, -105.0100],
@@ -69,7 +71,7 @@ window.SR_MAP = {
   hq: {
     id: "sheraton",
     name: "Sheraton Denver Downtown",
-    tag: "SR Weekend HQ",
+    tag: "SR Weekend Home Base",
     address: "1550 Court Pl, Denver, CO 80202",
     lat: 39.742375, lng: -104.98973,
     description: "Home base for the weekend. The store, the listening party and the help desk are all here.",
@@ -237,14 +239,14 @@ window.SR_MAP = {
       type: "city",
       name: "Whiskey Row",
       short: "Bar crawl start",
-      icon: "glass",
+      icon: "saloon",
       kind: "Downtown",
       address: "1946 Market St, Denver, CO 80202",
       mapsQuery: "Dierks Bentley's Whiskey Row Denver",
       lat: 39.753564, lng: -104.993754,
       minZoom: 12.5,
       hours: [{ day: "Sun", time: "9:30am" }],
-      description: "The Sunday morning bar crawl starts here, then heads to Tom's Watch Bar.",
+      description: "SR Weekend stop. The Sunday morning bar crawl starts here, then heads to Tom's Watch Bar.",
       access: "Ticketed separately",
       cta: { label: "Open in Apple Maps", kind: "apple-place" }
     },
@@ -254,7 +256,7 @@ window.SR_MAP = {
       type: "city",
       name: "Flyhi Cannabis",
       short: "Partner stop",
-      icon: "star",
+      icon: "leaf",
       kind: "Downtown",
       address: "401 16th St Mall, Denver, CO 80202",
       mapsQuery: "Flyhi Cannabis Dispensary",
@@ -271,7 +273,9 @@ window.SR_MAP = {
       type: "city",
       name: "Certified Tattoo",
       short: "mike. flash collection",
-      icon: "pen",
+      icon: "flash",
+      qr: true,
+      qrLabel: "Scan for Certified Tattoo",
       kind: "East Colfax",
       address: "3216 E Colfax Ave, Denver, CO 80206",
       mapsQuery: "Certified Tattoo Studios East Colfax",

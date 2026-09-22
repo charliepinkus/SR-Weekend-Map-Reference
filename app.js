@@ -27,6 +27,10 @@
     pen: '<path d="M15.5 4.5l4 4L9 19H5v-4z"/><path d="M13 7l4 4"/>',
     mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M6 11.5a6 6 0 0 0 12 0M12 17.5v3"/>',
     bus: '<rect x="5.5" y="4.5" width="13" height="13" rx="2.5"/><path d="M5.5 11h13M8.5 17.5v2M15.5 17.5v2"/>',
+    saloon: '<path d="M4.5 19.5V9.5h15v10"/><path d="M3 9.5h18M6 6.5h12v3H6z"/><path d="M8 19.5v-5h3v5M14 12h3v3h-3z"/>',
+    flash: '<path d="M12 3.5l2 5.2 5.5.4-4.2 3.5 1.3 5.4L12 15.1 7.4 18l1.3-5.4L4.5 9.1l5.5-.4z"/><path d="M12 8.6v3.6"/>',
+    leaf: '<path d="M12 4.5c-4.5 3.5-6 7-6 9.5a6 6 0 0 0 12 0c0-2.5-1.5-6-6-9.5z"/><path d="M12 8v11.5M9 14.5l3 2 3-2"/>',
+    hotel: '<path d="M4.5 19.5V7l5-2.5v15M9.5 19.5V4.5h10v15"/><path d="M12.5 8h1.5M16 8h1.5M12.5 11.5h1.5M16 11.5h1.5M12.5 15h1.5M16 15h1.5M3 19.5h18"/>',
     pin: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
     list: '<path d="M9 7h11M9 12h11M9 17h11"/><circle cx="4.8" cy="7" r="1"/><circle cx="4.8" cy="12" r="1"/><circle cx="4.8" cy="17" r="1"/>',
     chat: '<path d="M4.5 5.5h15v10h-8l-4 3.5v-3.5h-3z"/>',
@@ -36,11 +40,40 @@
     route: '<path d="M6 19V9a4 4 0 0 1 4-4h8M14 1.5L18 5l-4 3.5"/>'
   };
   const icon = (n) => `<svg viewBox="0 0 24 24" aria-hidden="true">${I[n] || ""}</svg>`;
-  const ROCKS = '<svg viewBox="0 0 44 30" aria-hidden="true"><path d="M2 27 L8 13 L13 17 L19 5 L26 16 L31 11 L42 27 Z" fill="#BA514E" stroke="#121111" stroke-width="1.8" stroke-linejoin="round"/><path d="M11 27 L16 20 M24 27 L29 19" stroke="#121111" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>';
+  const ROCKS = '<svg viewBox="0 0 48 32" aria-hidden="true"><path class="rk" d="M2 29 L6 16 L10 20 L14 9 L19 22 L21 29 Z"/><path class="rk" d="M17 29 L22 12 L27 6 L33 18 L36 29 Z"/><path class="rk" d="M32 29 L36 19 L41 14 L46 29 Z"/><path class="rl" d="M9 29 L13 22 M25 29 L28 20 M39 29 L42 23 M2 30h44"/></svg>';
   const ART = {
     "union-station": '<svg viewBox="0 0 64 40" width="58" height="36"><path class="f" d="M3 22h14v16H3zM47 22h14v16H47z"/><path class="f" d="M17 14h30v24H17z"/><path d="M17 14 L32 8.5 L47 14"/><path d="M21 38V27a3 3 0 0 1 6 0v11M29 38V27a3 3 0 0 1 6 0v11M37 38V27a3 3 0 0 1 6 0v11"/><rect class="fc" x="21" y="1" width="22" height="4.5" rx="1"/><path d="M25 5.5v4M39 5.5v4"/><path d="M6 28h8M50 28h8M6 33h8M50 33h8"/><path d="M1 38h62"/></svg>',
     capitol: '<svg viewBox="0 0 44 50" width="38" height="43"><path class="f" d="M4 48V35h36v13z"/><path d="M10 48v-9M16 48v-9M22 48v-9M28 48v-9M34 48v-9M4 38.5h36"/><path class="f" d="M12 35v-6h20v6z"/><path class="f" d="M13 29a9 10.5 0 0 1 18 0z"/><path d="M22 18.5v-7M19.5 11.5h5M17 29v-4M22 29v-5M27 29v-4"/><path d="M1 48h42"/></svg>'
   };
+  /* Hand-drawn line helpers: a seeded wobble so shapes stay stable between renders */
+  function rng(seed) { return function () { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function sketch(pts, closed, amp, seed) {
+    const r = rng(seed || 7), out = [], n = closed ? pts.length : pts.length - 1;
+    for (let i = 0; i < n; i++) {
+      const p = pts[i], q = pts[(i + 1) % pts.length], dx = q[0] - p[0], dy = q[1] - p[1], len = Math.hypot(dx, dy) || 1;
+      const steps = Math.max(1, Math.round(len / 14)), nx = -dy / len, ny = dx / len;
+      for (let s = 0; s < steps; s++) { const t = s / steps, j = (r() - 0.5) * 2 * amp * (s ? 1 : 0.3); out.push([p[0] + dx * t + nx * j, p[1] + dy * t + ny * j]); }
+    }
+    if (!closed) out.push(pts[pts.length - 1]);
+    const f = (p) => p[0].toFixed(1) + " " + p[1].toFixed(1), m = (u, v) => [(u[0] + v[0]) / 2, (u[1] + v[1]) / 2];
+    let d = closed ? "M" + f(m(out[out.length - 1], out[0])) : "M" + f(out[0]);
+    const end = closed ? out.length : out.length - 1;
+    for (let i = closed ? 0 : 1; i < end; i++) d += " Q" + f(out[i]) + " " + f(m(out[i], out[(i + 1) % out.length]));
+    return d + (closed ? " Z" : " L" + f(out[out.length - 1]));
+  }
+  const HOTEL_ART = '<svg viewBox="0 0 48 44" aria-hidden="true"><path class="bf" d="M5 41V12l8-4v33zM13 41V8h14v33zM31 41V16h12v25z"/><path d="M27 20h4M27 24h4" class="bl"/><path class="bw" d="M16 13h3M21 13h3M16 18h3M21 18h3M16 23h3M21 23h3M16 28h3M21 28h3M34 21h2.5M38 21h2.5M34 26h2.5M38 26h2.5M34 31h2.5M38 31h2.5M7 16h3M7 21h3M7 26h3M7 31h3"/><path class="bl" d="M2 41h44M18 41v-6h4v6"/></svg>';
+  function qrSvg(seed) {
+    const n = 21, r = rng(seed || 11), cells = [];
+    const finder = (x, y) => { for (let i = 0; i < 7; i++) for (let j = 0; j < 7; j++) { const edge = i === 0 || j === 0 || i === 6 || j === 6, core = i > 1 && i < 5 && j > 1 && j < 5; if (edge || core) cells.push([x + j, y + i]); } };
+    finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+    for (let i = 8; i < n - 8; i++) if (i % 2 === 0) { cells.push([i, 6]); cells.push([6, i]); }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const inF = (x < 8 && y < 8) || (x >= n - 8 && y < 8) || (x < 8 && y >= n - 8) || x === 6 || y === 6;
+      if (!inF && r() < 0.44) cells.push([x, y]);
+    }
+    return `<svg class="qr" viewBox="-1 -1 ${n + 2} ${n + 2}" role="img" aria-label="QR code placeholder"><rect x="-1" y="-1" width="${n + 2}" height="${n + 2}" fill="#fff"/>${cells.map((c) => `<rect x="${c[0]}" y="${c[1]}" width="1" height="1"/>`).join("")}</svg>`;
+  }
+
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
   /* ---------- Map ---------- */
@@ -93,7 +126,7 @@
   const R = D.route;
   let routeCase, routeLine, routePill;
   if (R && R.show) {
-    routeCase = L.polyline(R.path, { pane: "routePane", className: "rt-case", color: "#121111", weight: 9, opacity: 0.85, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
+    routeCase = L.polyline(R.path, { pane: "routePane", className: "rt-case", color: "#FBFAF4", weight: 10, opacity: 0.9, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
     routeLine = L.polyline(R.path, { pane: "routePane", className: "rt-line", color: "#BA514E", weight: 5.5, opacity: 1, lineCap: "round", lineJoin: "round", interactive: false }).addTo(map);
     const mid = R.path[Math.floor(R.path.length * 0.55)];
     routePill = L.marker(mid, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<div class="route-pill"><span>${esc(R.label)}</span></div>` }) }).addTo(map);
@@ -130,9 +163,10 @@
   }
 
   // Home base
-  const hqIt = addMarker(HQLL, `<div class="hq-group">
-      <button class="hq-tag" type="button" data-sel="${HQ.id}"><span class="hq-mark" aria-hidden="true"></span>
-        <span class="hq-t"><b>${esc(HQ.tag)}</b><small>${esc(HQ.name)}</small></span></button>
+  const hqIt = addMarker(HQLL, `<button class="hq-badge" type="button" data-sel="${HQ.id}" aria-label="${esc(HQ.name)}">${HOTEL_ART}<span class="hq-mark" aria-hidden="true"></span></button>
+    <div class="hq-group">
+      <button class="hq-tag" type="button" data-sel="${HQ.id}">
+        <span class="hq-t"><b>${esc(HQ.name)}</b><small>${esc(HQ.tag)}</small></span></button>
       <button class="hq-help" type="button" data-sel="help-desk"><i>?</i>Super Steve Help Desk</button>
     </div>`, { id: HQ.id, cls: "hq", z: 1000, pri: 100 });
 
@@ -154,7 +188,7 @@
       addMarker([p.lat, p.lng], html, { id: p.id, cls: "util", z: 300, pri: 50, minZoom: p.minZoom || 0, label: true });
     } else {
       html = `<button class="pin-btn" type="button" data-sel="${p.id}" aria-label="${esc(p.name)}">
-          <svg class="pin-drop" viewBox="0 0 32 40"><path class="body" d="M16 38.5C16 38.5 3 25.5 3 15.5a13 13 0 0 1 26 0c0 10-13 23-13 23z"/><g class="ic" transform="translate(8.5 8) scale(.625)">${I[p.icon] || ""}</g></svg></button>
+          <svg class="pin-drop" viewBox="0 0 32 40"><path class="body" d="M16 38.5C16 38.5 3 25.5 3 15.5a13 13 0 0 1 26 0c0 10-13 23-13 23z"/><path class="body-ink" d="${sketch([[16, 38], [6, 26], [3.5, 15.5], [8, 6.5], [16, 3], [24, 6.5], [28.5, 15.5], [26, 26]], true, 0.55, p.id.length * 31)}"/><g class="ic" transform="translate(8.5 8) scale(.625)">${I[p.icon] || ""}</g></svg></button>
         <span class="pin-lbl"><b>${esc(p.name)}</b>${p.short ? `<small>${esc(p.short)}</small>` : ""}</span>`;
       addMarker([p.lat, p.lng], html, { id: p.id, cls: "pin", z: 500, pri: 70, minZoom: p.minZoom || 0, label: true });
     }
@@ -195,6 +229,7 @@
     live.forEach((it) => {
       const el = it.m.getElement();
       const core = el.querySelector(".hq-group, .anc-badge, .pin-drop, .util-sq, .lm-in");
+      if (it.id === HQ.id) rects.push(pad(el.querySelector(".hq-badge").getBoundingClientRect(), 2));
       if (!core) return;
       const r = pad(core.getBoundingClientRect(), 2);
       if (it.pri < 90 && hit(r)) { el.classList.add("culled"); return; }
@@ -209,8 +244,14 @@
         const pt = map.latLngToContainerPoint(it.latlng);
         el.classList.toggle("left", pt.x + 26 + lbl.offsetWidth > innerWidth - 12);
       }
-      const r = pad(lbl.getBoundingClientRect(), 2);
-      if (hit(r)) el.classList.add("nolabel"); else rects.push(r);
+      let r = pad(lbl.getBoundingClientRect(), 2);
+      if (hit(r) && it.cls === "pin") {
+        el.classList.toggle("left");
+        r = pad(lbl.getBoundingClientRect(), 2);
+        if (hit(r) || r.left < 4 || r.right > innerWidth - 4) el.classList.toggle("left");
+        r = pad(lbl.getBoundingClientRect(), 2);
+      }
+      if (hit(r) && !el.classList.contains("is-on")) el.classList.add("nolabel"); else rects.push(r);
     });
     if (routePill && routePill.getElement()) {
       const pe = routePill.getElement(), r = pad(pe.firstElementChild.getBoundingClientRect(), 4);
@@ -300,6 +341,7 @@
       ${whenHtml(p)}
       <p class="c-desc">${esc(p.description)}</p>
       ${accessHtml(p)}
+      ${p.qr ? `<div class="c-qr">${qrSvg(p.id.length * 17)}<div class="c-qr-t"><b>${esc(p.qrLabel || "Scan for " + p.name)}</b><small>QR placeholder, design reference</small></div></div>` : ""}
       ${ctaHtml(p)}`;
   }
   function renderHQ() {
@@ -345,25 +387,30 @@
     const levels = ["level2", "lobby"].filter((lv) => !f || f.spots.some((sp) => sp.level === lv));
     const H = (lv) => (plates[lv][2] + plates[lv][3]) * 0.5 * s + th;
     let y0 = 62, out = "", tops = {};
-    levels.forEach((lv) => { tops[lv] = y0; y0 += H(lv) + gap + 52; });
+    levels.forEach((lv) => { tops[lv] = y0; y0 += H(lv) + gap + (lv === "lobby" ? 64 : 52); });
     const iso = (u, v, lv) => [(u - v) * 0.866 * s, (u + v) * 0.5 * s + tops[lv]];
     const P = (a) => a[0].toFixed(1) + " " + a[1].toFixed(1);
     levels.forEach((lv) => {
       const [u0, v0, u1, v1] = plates[lv];
       const A = iso(u0, v0, lv), B = iso(u1, v0, lv), C = iso(u1, v1, lv), Dd = iso(u0, v1, lv);
       out += `<text class="lvl" x="${(Dd[0]).toFixed(1)}" y="${(A[1] - 40).toFixed(1)}">${lv === "lobby" ? "Lobby level" : "Level 2, event level"}</text>`;
-      out += `<path class="side" d="M${P(B)} L${P(C)} L${C[0]} ${C[1] + th} L${B[0]} ${B[1] + th}Z"/>`;
-      out += `<path class="side2" d="M${P(Dd)} L${P(C)} L${C[0]} ${C[1] + th} L${Dd[0]} ${Dd[1] + th}Z"/>`;
-      out += `<path class="plate" d="M${P(A)} L${P(B)} L${P(C)} L${P(Dd)}Z"/>`;
+      out += `<path class="side" d="${sketch([B, C, [C[0], C[1] + th], [B[0], B[1] + th]], true, 0.5, 3)}"/>`;
+      out += `<path class="side2" d="${sketch([Dd, C, [C[0], C[1] + th], [Dd[0], Dd[1] + th]], true, 0.5, 4)}"/>`;
+      out += `<path class="plate" d="${sketch([A, B, C, Dd], true, 0.6, lv === "lobby" ? 5 : 6)}"/>`;
       D.rooms.filter((r) => r.level === lv).forEach((r) => {
         const a = iso(r.u0, r.v0, lv), b = iso(r.u1, r.v0, lv), c = iso(r.u1, r.v1, lv), d = iso(r.u0, r.v1, lv);
-        out += `<path class="room" d="M${P(a)} L${P(b)} L${P(c)} L${P(d)}Z"/>`;
+        out += `<path class="room" d="${sketch([a, b, c, d], true, 0.5, r.u0 + 9)}"/>`;
+        const rm = iso(r.u0 + 4, r.v1 + 2, lv);
+        out += `<text class="room-n" x="${rm[0].toFixed(1)}" y="${(rm[1] + 4).toFixed(1)}">${esc(r.name)}</text>`;
       });
       if (lv === "lobby") {
         const a = iso(90, 6, lv), b = iso(95, 6, lv), c = iso(95, 30, lv), d = iso(90, 30, lv);
         out += `<path class="desk" d="M${P(a)} L${P(b)} L${P(c)} L${P(d)}Z"/>`;
-        const e = iso(100, 40, lv);
-        out += `<text class="hint" x="${(e[0] - 4).toFixed(1)}" y="${(e[1] + th + 16).toFixed(1)}" text-anchor="end">Front desk on the right</text>`;
+        const e = iso(96, 18, lv);
+        out += `<text class="hint" x="${(e[0] + 10).toFixed(1)}" y="${(e[1] + 4).toFixed(1)}">Front desk</text>`;
+        const me = iso(70, 40, lv), se = iso(0, 20, lv);
+        out += `<path class="door" d="M${(me[0]).toFixed(1)} ${(me[1] + th + 22).toFixed(1)} L${me[0].toFixed(1)} ${(me[1] + th + 4).toFixed(1)}"/><text class="hint" x="${me[0].toFixed(1)}" y="${(me[1] + th + 34).toFixed(1)}" text-anchor="middle">Main entrance</text>`;
+        out += `<path class="door" d="M${(se[0] - 26).toFixed(1)} ${(se[1] - 13).toFixed(1)} L${(se[0] - 6).toFixed(1)} ${(se[1] - 3).toFixed(1)}"/><text class="hint" x="${(se[0] - 30).toFixed(1)}" y="${(se[1] - 18).toFixed(1)}" text-anchor="end">Street entrance</text>`;
       }
     });
     if (levels.length === 2) {
@@ -386,7 +433,7 @@
         <circle cx="${x.toFixed(1)}" cy="${cy.toFixed(1)}" r="22" fill="transparent"/>
       </g>`;
     })));
-    const minX = -40 * 0.866 * s - 8, maxX = 100 * 0.866 * s + 70;
+    const minX = -40 * 0.866 * s - 98, maxX = 100 * 0.866 * s + 70;
     return `<svg viewBox="${minX.toFixed(0)} 0 ${(maxX - minX).toFixed(0)} ${(y0 - gap - 30).toFixed(0)}" role="img" aria-label="Sheraton levels">${out}</svg>`;
   }
 
